@@ -76,13 +76,12 @@ class TypeOpParsingHandler : public Core::Processing::Handlers::GenericParsingHa
   );
 
   private: SharedPtr<Core::Data::Ast::Definition> createBinaryOpFunction(
-    Processing::ParserState *state, Char const *funcName, TioSharedPtr const &thisType, Char const *inputName,
-    TioSharedPtr const &inputType, TioSharedPtr const &retType, TioSharedPtr const &body,
-    SharedPtr<Core::Data::SourceLocation> const &sourceLocation
+    Char const *funcName, TioSharedPtr const &thisType, Char const *inputName, TioSharedPtr const &inputType,
+    TioSharedPtr const &retType, TioSharedPtr const &body, SharedPtr<Core::Data::SourceLocation> const &sourceLocation
   );
 
   private: SharedPtr<Core::Data::Ast::Definition> createFunction(
-    Processing::ParserState *state, Char const *funcName, SharedPtr<Core::Data::Ast::Map> const argTypes,
+    Char const *funcName, SharedPtr<Core::Data::Ast::Map> const argTypes,
     TioSharedPtr const &retType, TioSharedPtr const &body, SharedPtr<Core::Data::SourceLocation> const &sourceLocation
   );
 

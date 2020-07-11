@@ -17,8 +17,6 @@ namespace Spp::LlvmCodeGen
 
 void LazyJitBuildTarget::setupBuild()
 {
-  BuildTarget::setupBuild();
-
   this->llvmJitEngine.reset();
 
   this->llvmJitEngine = llvm::cantFail(LazyJitEngineBuilder().create(this->globalItemRepo));

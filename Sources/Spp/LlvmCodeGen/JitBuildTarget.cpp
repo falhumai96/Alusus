@@ -17,8 +17,6 @@ namespace Spp::LlvmCodeGen
 
 void JitBuildTarget::setupBuild()
 {
-  BuildTarget::setupBuild();
-
   this->llvmJitEngine.reset();
 
   this->llvmJitEngine = llvm::cantFail(JitEngineBuilder().create(this->globalItemRepo));

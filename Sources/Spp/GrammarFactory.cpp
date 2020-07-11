@@ -55,8 +55,7 @@ void GrammarFactory::createGrammar(Core::Data::Ast::Scope *rootScope) {
     S("terminate"), S("اتلف"), S("أتلف"),
     S("integer"), S("صحيح"),
     S("string"), S("محارف"),
-    S("any"), S("أيما"),
-    S("next_arg"), S("المعطى_التالي")
+    S("any"), S("أيما")
   });
 
   // Add translations for def modifiers.
@@ -641,18 +640,6 @@ void GrammarFactory::createGrammar(Core::Data::Ast::Scope *rootScope) {
       {S("fltr"), std::make_shared<TiInt>(1)}
     })}
   }).get());
-  // ~next_arg
-  this->createCommand(S("root.Main.NextArgTilde"), {{
-    Map::create({}, {{S("next_arg"), 0}, {S("المعطى_التالي"), 0}}),
-    {
-      {
-        PARSE_REF(S("module.CastSubject")),
-        TiInt::create(1),
-        TiInt::create(1),
-        TiInt::create(ParsingFlags::PASS_ITEMS_UP)
-      }
-    }
-  }}, Spp::Handlers::TildeOpParsingHandler<Spp::Ast::NextArgOp>::create());
 
   // Add command references.
 
@@ -673,8 +660,7 @@ void GrammarFactory::createGrammar(Core::Data::Ast::Scope *rootScope) {
     PARSE_REF(S("module.ContentTilde")),
     PARSE_REF(S("module.PointerTilde")),
     PARSE_REF(S("module.InitTilde")),
-    PARSE_REF(S("module.TerminateTilde")),
-    PARSE_REF(S("module.NextArgTilde"))
+    PARSE_REF(S("module.TerminateTilde"))
   });
 
   this->addProdsToGroup(S("root.Main.SubjectCmdGrp"), {
@@ -723,8 +709,7 @@ void GrammarFactory::cleanGrammar(Core::Data::Ast::Scope *rootScope)
     S("terminate"), S("اتلف"), S("أتلف"),
     S("integer"), S("صحيح"),
     S("string"), S("محارف"),
-    S("any"), S("أيما"),
-    S("next_arg"), S("المعطى_التالي")
+    S("any"), S("أيما")
   });
 
   // Add translation for static modifier.
@@ -739,8 +724,7 @@ void GrammarFactory::cleanGrammar(Core::Data::Ast::Scope *rootScope)
     S("module.ContentTilde"),
     S("module.PointerTilde"),
     S("module.InitTilde"),
-    S("module.TerminateTilde"),
-    S("module.NextArgTilde")
+    S("module.TerminateTilde")
   });
 
   // Remove commands from leading commands list.
@@ -776,7 +760,6 @@ void GrammarFactory::cleanGrammar(Core::Data::Ast::Scope *rootScope)
   this->tryRemove(S("root.Main.InitTildeSubject"));
   this->tryRemove(S("root.Main.TerminateTilde"));
   this->tryRemove(S("root.Main.TerminateTildeSubject"));
-  this->tryRemove(S("root.Main.NextArgTilde"));
 
   // Delete leading command definitions.
   this->tryRemove(S("root.Main.If"));

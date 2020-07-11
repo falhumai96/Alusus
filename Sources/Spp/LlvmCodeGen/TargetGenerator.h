@@ -40,7 +40,6 @@ class TargetGenerator : public TiObject, public DynamicBinding, public DynamicIn
   private: Core::Notices::Store *noticeStore = 0;
   private: BuildTarget *buildTarget = 0;
   private: Bool perFunctionModules = false;
-  private: llvm::FunctionType *vaStartEndFnType = 0;
 
   private: Int blockIndex = 0;
   private: Int anonymousVarIndex = 0;
@@ -113,8 +112,6 @@ class TargetGenerator : public TiObject, public DynamicBinding, public DynamicIn
   );
 
   public: Word getTypeAllocationSize(TiObject *type);
-
-  private: llvm::FunctionType* getVaStartEndFnType();
 
   /// @}
 
@@ -349,10 +346,6 @@ class TargetGenerator : public TiObject, public DynamicBinding, public DynamicIn
 
   public: Bool generateXorAssign(
     TiObject *context, TiObject *type, TiObject *destVar, TiObject *srcVal, TioSharedPtr &result
-  );
-
-  public: Bool generateNextArg(
-    TiObject *context, TiObject *type, TiObject *srcVal, TioSharedPtr &result
   );
 
   /// @}

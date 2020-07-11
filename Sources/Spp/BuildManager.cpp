@@ -263,17 +263,11 @@ Bool BuildManager::_buildDependencies(TiObject *self, Core::Notices::Store *noti
       if (buildMgr->buildGlobalCtorOrDtor(
         buildSession, buildSession->getGlobalVarInitializationDeps(), globalVarInitializationIndex, ctorName.c_str(),
         [=](
-          Spp::Ast::Type *varAstType, TiObject *varTgRef, Core::Data::Node *varAstNode, TiObject *astParams,
-          CodeGen::Session *childSession
+          Spp::Ast::Type *varAstType, TiObject *varTgRef, Core::Data::Node *varAstNode, CodeGen::Session *childSession
         )->Bool {
           SharedList<TiObject> initTgVals;
           PlainList<TiObject> initAstTypes;
           PlainList<TiObject> initAstNodes;
-          if (astParams != 0) {
-            if (!buildMgr->generator->getExpressionGenerator()->generateParams(
-              astParams, generation, childSession, &initAstNodes, &initAstTypes, &initTgVals
-            )) return false;
-          }
           return generation->generateVarInitialization(
             varAstType, varTgRef, varAstNode, &initAstNodes, &initAstTypes, &initTgVals, childSession
           );
@@ -297,8 +291,7 @@ Bool BuildManager::_buildDependencies(TiObject *self, Core::Notices::Store *noti
       if (buildMgr->buildGlobalCtorOrDtor(
         buildSession, buildSession->getGlobalVarDestructionDeps(), globalVarDestructionIndex, dtorName.c_str(),
         [=](
-          Spp::Ast::Type *varAstType, TiObject *varTgRef, Core::Data::Node *varAstNode, TiObject *astParams,
-          CodeGen::Session *childSession
+          Spp::Ast::Type *varAstType, TiObject *varTgRef, Core::Data::Node *varAstNode, CodeGen::Session *childSession
         )->Bool {
           return generation->generateVarDestruction(varAstType, varTgRef, varAstNode, childSession);
         }
@@ -319,8 +312,7 @@ Bool BuildManager::_buildDependencies(TiObject *self, Core::Notices::Store *noti
 Bool BuildManager::buildGlobalCtorOrDtor(
   BuildSession *buildSession, DependencyList<Core::Data::Node> *deps, Int depsIndex, Char const *funcName,
   std::function<Bool(
-    Spp::Ast::Type *varAstType, TiObject *tgVarRef, Core::Data::Node *astNode, TiObject *astParams,
-    CodeGen::Session *session
+    Spp::Ast::Type *varAstType, TiObject *tgVarRef, Core::Data::Node *astNode, CodeGen::Session *session
   )> varOpCallback
 ) {
   auto generation = ti_cast<CodeGen::Generation>(this->generator);
@@ -341,19 +333,10 @@ Bool BuildManager::buildGlobalCtorOrDtor(
     auto astVar = deps->get(depsIndex);
     TiObject *tgVar = session.getEda()->getCodeGenData<TiObject>(astVar);
 
-    // Get initialization params, if any.
-    TiObject *astTypeRef = astVar;
-    TiObject *astParams = 0;
-    auto astParamPass = ti_cast<Core::Data::Ast::ParamPass>(astVar);
-    if (astParamPass != 0 && astParamPass->getType() == Core::Data::Ast::BracketType::ROUND) {
-      astTypeRef = astParamPass->getOperand().get();
-      astParams = astParamPass->getParam().get();
-    }
-
     // Get the type of the variable.
     TiObject *tgType;
     Ast::Type *astType;
-    if (!generation->getGeneratedType(astTypeRef, &session, tgType, &astType)) {
+    if (!generation->getGeneratedType(astVar, &session, tgType, &astType)) {
       result = false;
       continue;
     }
@@ -364,7 +347,7 @@ Bool BuildManager::buildGlobalCtorOrDtor(
       result = false;
       continue;
     }
-    if (!varOpCallback(astType, tgVarRef.get(), astVar, astParams, &session)) {
+    if (!varOpCallback(astType, tgVarRef.get(), astVar, &session)) {
       result = false;
       continue;
     }

@@ -268,9 +268,7 @@ Bool Helper::_lookupCalleeOnObject(
         return false;
       }
     } else {
-      if (result.matchStatus == TypeMatchStatus::NONE) {
-        result.notice = std::make_shared<Spp::Notices::ArgsMismatchNotice>();
-      }
+      if (result.matchStatus == TypeMatchStatus::NONE) result.notice = std::make_shared<Spp::Notices::ArgsMismatchNotice>();
       return false;
     }
   } else if (obj != 0 && obj->isDerivedFrom<Type>()) {
@@ -294,58 +292,25 @@ Bool Helper::_lookupCalleeOnObject(
         return false;
       }
     } else {
-      auto objType = static_cast<Type*>(obj);
+      // Lookup custom parens operators.
       auto objRefType = helper->getReferenceTypeFor(obj);
-      if (result.stack.getCount() == currentStackSize && thisType == 0) {
-        // This is a constructor.
-        static Core::Data::Ast::Identifier ref({ {S("value"), TiStr(S("~init"))} });
-        if (helper->lookupCalleeInScope(
-          &ref, static_cast<Core::Data::Node*>(obj), false, objRefType, types, ec, result
-        )) {
-          // A constructor match was found.
-          result.stack.set(currentStackSize, objType);
-          result.thisIndex = -2;
-          result.type = objType;
-          return true;
-        } else if (
-          types->getElementCount() == 0 && (objType->getInitializationMethod(helper, ec) & TypeInitMethod::USER) == 0
-        ) {
-          // No user-defined constructor is defined and no params is provided, so we can skip the matching.
-          result.matchStatus = TypeMatchStatus::EXACT;
-          result.notice.reset();
-          result.stack.add(objType);
-          result.thisIndex = -2;
-          result.type = objType;
-          return true;
-        } else {
-          // If the ref symbol we provided here was not found we'll provide a better error message to the user since
-          // the user didn't manually provide this symbol.
-          if (result.notice != 0 && result.notice->isA<Spp::Notices::UnknownSymbolNotice>()) {
-            result.notice = std::make_shared<Spp::Notices::InvalidOperationNotice>();
-          }
-          return false;
-        }
+      static Core::Data::Ast::Identifier ref({ {S("value"), TiStr(S("()"))} });
+      if (helper->lookupCalleeInScope(
+        &ref, static_cast<Core::Data::Node*>(obj), false, objRefType, types, ec, result
+      )) {
+        return true;
       } else {
-        // Lookup custom parens operators.
-        static Core::Data::Ast::Identifier ref({ {S("value"), TiStr(S("()"))} });
-        if (helper->lookupCalleeInScope(
-          &ref, static_cast<Core::Data::Node*>(obj), false, objRefType, types, ec, result
-        )) {
-          return true;
-        } else {
-          // If the ref symbol we provided here was not found we'll provide a better error message to the user since
-          // the user didn't manually provide this symbol.
-          if (result.notice != 0 && result.notice->isA<Spp::Notices::UnknownSymbolNotice>()) {
-            result.notice = std::make_shared<Spp::Notices::InvalidOperationNotice>();
-          }
-          return false;
+        // If the ref symbol we provided here was not found we'll provide a better error message to the user since
+        // the user didn't manually provide this symbol.
+        if (result.notice != 0 && result.notice->isA<Spp::Notices::UnknownSymbolNotice>()) {
+          result.notice = std::make_shared<Spp::Notices::InvalidOperationNotice>();
         }
+        return false;
       }
     }
   } else if (obj != 0 && helper->isAstReference(obj)) {
     // Match variables
-    auto objType = ti_cast<Type>(helper->traceType(obj));
-    if (objType == 0) return false;
+    auto objType = ti_cast<Type>(helper->getSeeker()->tryGet(obj, obj));
     objType = helper->tryGetDeepReferenceContentType(objType);
     if (objType == 0) {
       if (result.matchStatus == TypeMatchStatus::NONE) {
@@ -359,7 +324,7 @@ Bool Helper::_lookupCalleeOnObject(
         prevVal = result.stack.get(currentStackSize);
         result.stack.set(currentStackSize, obj);
       }
-      if (helper->lookupCalleeOnObject(objType, objType, types, ec, currentStackSize, result)) {
+      if (helper->lookupCalleeOnObject(objType, 0, types, ec, currentStackSize, result)) {
         return true;
       } else {
         if (result.stack.getCount() > currentStackSize) result.stack.remove(currentStackSize);
@@ -482,16 +447,11 @@ Type* Helper::_traceType(TiObject *self, TiObject *ref)
       if (result != 0 && result->isDerivedFrom<Core::Notices::Notice>()) notice = result.s_cast<Core::Notices::Notice>();
     }
   } else if (helper->isAstReference(ref)) {
-    auto typeRef = static_cast<Core::Data::Node*>(ref);
-    auto owner = typeRef->getOwner();
-    auto paramPass = ti_cast<Core::Data::Ast::ParamPass>(ref);
-    if (paramPass != 0 && paramPass->getType() == Core::Data::Ast::BracketType::ROUND) {
-      typeRef = paramPass->getOperand().ti_cast_get<Core::Data::Node>();
-    }
-    if (typeRef == 0) {
+    auto *refNode = ti_cast<Core::Data::Node>(ref);
+    if (refNode == 0) {
       throw EXCEPTION(GenericException, S("Invalid type reference."));
     }
-    helper->getSeeker()->foreach(typeRef, owner,
+    helper->getSeeker()->foreach(ref, refNode->getOwner(),
       [=, &type, &notice](TiObject *obj, Core::Notices::Notice *ntc)->Core::Data::Seeker::Verb
       {
         if (ntc != 0) {
