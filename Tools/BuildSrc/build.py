@@ -226,8 +226,7 @@ def parse_cmd_args(args):
     parser.add_argument("--build-type",
                         type=BuildType.from_alusus_build_type_str, default=BuildType.DEBUG, help="Alusus build type")
     parser.add_argument("--target-triplet",
-                        type=TargetTriplet.from_alusus_target_triplet_str,
-                        default=TargetTriplet.host_default_target_triplet(), help="Alusus target triplet")
+                        type=TargetTriplet.from_alusus_target_triplet_str, help="Alusus target triplet")
     parser.add_argument("--clean-and-build", action="store_true",
                         help="Whether or not to clean Alusus before building")
     parser.add_argument("--build-packages", action="store_true",
@@ -249,6 +248,10 @@ def parse_cmd_args(args):
     parser.add_argument("--verbose", action="store_true",
                         help="Verbose output when calling sub commands")
     processed_args = parser.parse_args(args)
+
+    # Set default target triplet.
+    if processed_args.target_triplet == None:
+        processed_args.target_triplet = TargetTriplet.host_default_target_triplet()
 
     # Set the default build, install, and packages paths if no custom paths provided.
     alusus_local_build_path = os.path.join(

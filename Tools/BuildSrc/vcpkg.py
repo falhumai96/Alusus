@@ -42,14 +42,16 @@ def _get_vcpkg_version_from_json_object(json_obj) -> str:
             "Unsupported vcpkg versioning scheme.")
 
 
-def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path=get_vcpkg_repo_path(), verbose_output=False):
+def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path=None, verbose_output=False):
+    if vcpkg_repo_path == None:
+        vcpkg_repo_path = get_vcpkg_repo_path()
     manifest_file_data = None
 
     for package_name in os.listdir(common.VCPKG_ALUSUS_PORTS_OVERLAY_DIR):
         overlay_port_location = os.path.join(
             alusus_vcpkg_ports_overlays_location, package_name)
 
-        # Check for port overlay hash change.
+        # Check if the port overlay exists.
         if os.path.exists(os.path.join(overlay_port_location, "vcpkg.json")):
             continue
 
