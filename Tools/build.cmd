@@ -15,7 +15,7 @@ goto start
 :done
 
 if "!ALUSUS_PYTHON_EXECUTABLE!"== "" (
-    set PYTHON_EXECUTABLE=python
+    set PYTHON_EXECUTABLE=python.exe
 ) else (
     set PYTHON_EXECUTABLE=!ALUSUS_PYTHON_EXECUTABLE!
 )

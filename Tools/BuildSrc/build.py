@@ -27,7 +27,8 @@ def build_alusus(alusus_build_location: str,
                  alusus_lib_dirname: str,
                  alusus_include_dirname: str,
                  skip_installing_std_deps: bool,
-                 verbose_output: bool = False):
+                 verbose_output: bool = False,
+                 force_cmake_generator: str = None):
 
     os.makedirs(alusus_build_location, exist_ok=True)
     os.makedirs(alusus_install_location, exist_ok=True)
@@ -80,6 +81,9 @@ def build_alusus(alusus_build_location: str,
         "-DVCPKG_OVERLAY_PORTS={vcpkg_alusus_overlay_ports}".format(
             vcpkg_alusus_overlay_ports=alusus_vcpkg_ports_overlays_location
         ),
+        "-DVCPKG_OVERLAY_TRIPLETS={vcpkg_alusus_overlay_triplets}".format(
+            vcpkg_alusus_overlay_triplets=common.VCPKG_ALUSUS_TRIPLETS_OVERLAY_DIR
+        ),
         "-DALUSUS_BIN_DIR_NAME={alusus_bin_dirname}".format(
             alusus_bin_dirname=alusus_bin_dirname),
         "-DALUSUS_LIB_DIR_NAME={alusus_lib_dirname}".format(
@@ -87,7 +91,14 @@ def build_alusus(alusus_build_location: str,
         "-DALUSUS_INCLUDE_DIR_NAME={alusus_include_dirname}".format(
             alusus_include_dirname=alusus_include_dirname)
     ]
-    if alusus_target_triplet.value.cmake_generator:
+    if force_cmake_generator:
+        msg.info_msg("Using forced {cmake_generator} CMake generator with the CMake configuration.".format(
+            cmake_generator=json.dumps(
+                force_cmake_generator
+            )
+        ))
+        cmake_cmd += ["-G", force_cmake_generator]
+    elif alusus_target_triplet.value.cmake_generator:
         msg.info_msg("Using preferred {cmake_generator} CMake generator with the CMake configuration.".format(
             cmake_generator=json.dumps(
                 alusus_target_triplet.value.cmake_generator
@@ -140,6 +151,21 @@ def build_alusus(alusus_build_location: str,
                 ("libkubazip.dylib", "libkubazip.dylib")
             ]
             # TODO: Add more libs to install as needed here.
+        elif alusus_target_triplet.value.platform == "win32":
+            # MSVC.
+            if alusus_target_triplet.value.abi == "msvc":
+                libs_to_install = [
+                    ("libcurl.dll", "libcurl.dll"),
+                    ("kubazip.dll", "libkubazip.dll")
+                ]
+                # TODO: Add more libs to install as needed here.
+            # MinGW.
+            else:
+                libs_to_install = [
+                    ("libcurl.dll", "libcurl.dll"),
+                    ("libkubazip.dll", "libkubazip.dll")
+                ]
+                # TODO: Add more libs to install as needed here.
         # TODO: Add more logic for other targets here.
 
         std_libs_location = os.path.join(
@@ -187,10 +213,18 @@ def build_alusus(alusus_build_location: str,
                 ("wasm-ld", "wasm-ld")
             ]
             # TODO: Add more bins to install as needed here.
+        elif alusus_target_triplet.value.platform == "win32":
+            bins_to_install = [
+                (os.path.join("llvm", "wasm-ld.exe"), "wasm-ld.exe")
+            ]
+            # TODO: Add more bins to install as needed here.
         # TODO: Add more logic for other targets here.
 
         std_bins_location = os.path.join(
             alusus_build_location, "vcpkg_installed", alusus_target_triplet.value.vcpkg_target_triplet, "bin")
+        if alusus_target_triplet.value.platform == "win32":
+            std_bins_location = os.path.join(
+                alusus_build_location, "vcpkg_installed", alusus_target_triplet.value.vcpkg_target_triplet, "tools")
         alusus_bins_install_location = os.path.join(
             alusus_install_location, alusus_bin_dirname)
 
@@ -239,6 +273,8 @@ def parse_cmd_args(args):
                         help="Alusus library folder name inside Alusus install location")
     parser.add_argument("--include-dirname",
                         type=str, default="Include", help="Alusus include folder name inside Alusus install location")
+    parser.add_argument("--force-cmake-generator",
+                        type=str, help="Use specific CMake generator")
     parser.add_argument("--skip-installing-std-deps",
                         help="Whether or not to skip installing the standard libraries dependencies", action="store_true")
     parser.add_argument("--print-supported-build-types", action="store_true",
@@ -266,24 +302,32 @@ def parse_cmd_args(args):
         processed_args.build_location = os.path.join(
             alusus_local_build_path, "Intermediate", target_dirname)
     else:
-        processed_args.build_location = os.path.abspath(processed_args.build_location)
+        processed_args.build_location = os.path.abspath(
+            processed_args.build_location)
     if processed_args.install_location == None:
         processed_args.install_location = os.path.join(
             alusus_local_build_path, "Install", target_dirname)
     else:
-        processed_args.install_location = os.path.abspath(processed_args.install_location)
+        processed_args.install_location = os.path.abspath(
+            processed_args.install_location)
     if processed_args.packages_location == None:
         processed_args.packages_location = os.path.join(
             alusus_local_build_path, "Packages", target_dirname)
     else:
-        processed_args.packages_location = os.path.abspath(processed_args.packages_location)
+        processed_args.packages_location = os.path.abspath(
+            processed_args.packages_location)
 
     return processed_args
 
 
 if __name__ == "__main__":
     init_colorama()
-    args = parse_cmd_args(sys.argv[1:])
+    args = None
+    try:
+        args = parse_cmd_args(sys.argv[1:])
+    except NotImplementedError as e:
+        common.eprint(e)
+        exit(1)
 
     # Process print arguments first.
     if args.print_supported_build_types:
@@ -304,7 +348,8 @@ if __name__ == "__main__":
                        args.lib_dirname,
                        args.include_dirname,
                        args.skip_installing_std_deps,
-                       verbose_output=args.verbose)
+                       verbose_output=args.verbose,
+                       force_cmake_generator=args.force_cmake_generator)
     if not ret:
         exit(1)
 

@@ -52,7 +52,7 @@ def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path
             alusus_vcpkg_ports_overlays_location, package_name)
 
         # Check if the port overlay exists.
-        if os.path.exists(os.path.join(overlay_port_location, "vcpkg.json")):
+        if os.path.exists(os.path.join(overlay_port_location, "DONE")):
             continue
 
         # Get the package version and port number from the "vcpkg.json" manifest file.
@@ -106,7 +106,8 @@ def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path
         common.remove_path(overlay_port_location, follow_symlinks=False)
 
         # Restore the upstream port files inside Alusus build directory.
-        restore_git_tree_to_path(vcpkg_repo_path, git_tree_hash, overlay_port_location)
+        restore_git_tree_to_path(
+            vcpkg_repo_path, git_tree_hash, overlay_port_location)
 
         # Apply Alusus port overlay changes to the restored port files.
         shutil.copytree(
@@ -115,6 +116,10 @@ def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path
             overlay_port_location, dirs_exist_ok=True,
             symlinks=True, ignore_dangling_symlinks=True
         )
+
+        # Add check that the overlay changes are fully written to desk.
+        with open(os.path.join(overlay_port_location, "DONE"), "w") as fd:
+            fd.write("")
 
         msg.success_msg("Updating dependency {package_name}'s port overlay.".format(
             package_name=json.dumps(package_name)))
