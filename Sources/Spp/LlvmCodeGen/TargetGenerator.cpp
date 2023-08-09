@@ -375,7 +375,7 @@ Bool TargetGenerator::prepareFunctionBody(
     auto int8PtrType = int8Type->getPointerTo();
     std::vector<llvm::Value*> vaArgs;
     vaArgs.push_back(block->getIrBuilder()->CreateBitCast(funcWrapper->llvmVaList, int8PtrType));
-    block->getIrBuilder()->CreateCall(llvmVaStartFunc, vaArgs);
+    block->getIrBuilder()->CreateCall(funcWrapper->getFunctionType()->getLlvmFunctionType(), llvmVaStartFunc, vaArgs);
     // Attach the variable to the var list.
     SharedPtr<Variable> arg = newSrdObj<Variable>();
     arg->setLlvmAllocaInst(funcWrapper->llvmVaList);
@@ -888,7 +888,7 @@ Bool TargetGenerator::generateMemberVarReference(
     *this->buildTarget->getLlvmContext(), llvm::APInt(32, tgMemberVarDef->getLlvmStructIndex(), true)
   );
   auto llvmResult = block->getIrBuilder()->CreateGEP(
-    llvmPtr, llvm::makeArrayRef(std::vector<llvm::Value*>({ zero, index })), ""
+    tgStructType->getLlvmType(), llvmPtr, llvm::makeArrayRef(std::vector<llvm::Value*>({ zero, index })), ""
   );
   result = newSrdObj<Value>(llvmResult, false);
   return true;
@@ -914,7 +914,8 @@ Bool TargetGenerator::generateArrayElementReference(
 
   auto zero = llvm::ConstantInt::get(*this->buildTarget->getLlvmContext(), llvm::APInt(32, 0, true));
   auto llvmResult = block->getIrBuilder()->CreateGEP(
-    llvmPtr, llvm::makeArrayRef(std::vector<llvm::Value*>({ zero, tgIndex->getLlvmValue() })), ""
+    tgArrayType->getLlvmType(), llvmPtr,
+    llvm::makeArrayRef(std::vector<llvm::Value*>({ zero, tgIndex->getLlvmValue() })), ""
   );
   result = newSrdObj<Value>(llvmResult, false);
   return true;
@@ -926,7 +927,8 @@ Bool TargetGenerator::generateDereference(
 ) {
   PREPARE_ARG(context, block, Block);
   PREPARE_ARG(srcVal, cgSrcVal, Value);
-  auto llvmResult = block->getIrBuilder()->CreateLoad(cgSrcVal->getLlvmValue());
+  PREPARE_ARG(contentType, tgContentType, Type);
+  auto llvmResult = block->getIrBuilder()->CreateLoad(tgContentType->getLlvmType(), cgSrcVal->getLlvmValue());
   result = newSrdObj<Value>(llvmResult, false);
   return true;
 }
@@ -1013,7 +1015,7 @@ Bool TargetGenerator::generateFunctionCall(
     );
   }
   // Create the call.
-  auto llvmCall = block->getIrBuilder()->CreateCall(llvmFunc, args);
+  auto llvmCall = block->getIrBuilder()->CreateCall(funcWrapper->getFunctionType()->getLlvmFunctionType(), llvmFunc, args);
   result = newSrdObj<Value>(llvmCall, false);
   return true;
 }
@@ -1054,7 +1056,7 @@ Bool TargetGenerator::generateFunctionPtrCall(
 
     args.push_back(llvmValue);
   }
-  auto llvmCall = block->getIrBuilder()->CreateCall(llvmFuncPtrBox->getLlvmValue(), args);
+  auto llvmCall = block->getIrBuilder()->CreateCall(llvmFuncTypeBox->getLlvmFunctionType(), llvmFuncPtrBox->getLlvmValue(), args);
   result = newSrdObj<Value>(llvmCall, false);
   return true;
 }
@@ -1082,7 +1084,7 @@ Bool TargetGenerator::generateReturn(
     auto int8PtrType = int8Type->getPointerTo();
     std::vector<llvm::Value*> vaArgs;
     vaArgs.push_back(block->getIrBuilder()->CreateBitCast(block->getFunction()->llvmVaList, int8PtrType));
-    block->getIrBuilder()->CreateCall(llvmVaEndFunc, vaArgs);
+    block->getIrBuilder()->CreateCall(llvmVaEndFunc->getFunctionType(), llvmVaEndFunc, vaArgs);
   }
 
   if (retVal != 0) {
@@ -1206,6 +1208,7 @@ Bool TargetGenerator::generateAdd(
     return true;
   } else if (tgType->isDerivedFrom<PointerType>()) {
     auto llvmResult = block->getIrBuilder()->CreateGEP(
+      tgType->getLlvmType(),
       srcVal1Box->getLlvmValue(),
       llvm::makeArrayRef(std::vector<llvm::Value*>({ srcVal2Box->getLlvmValue() })), ""
     );
@@ -1240,6 +1243,7 @@ Bool TargetGenerator::generateSub(
   } else if (tgType->isDerivedFrom<PointerType>()) {
     auto negIndex = block->getIrBuilder()->CreateNeg(srcVal2Box->getLlvmValue());
     auto llvmResult = block->getIrBuilder()->CreateGEP(
+      tgType->getLlvmType(),
       srcVal1Box->getLlvmValue(),
       llvm::makeArrayRef(std::vector<llvm::Value*>({ negIndex })), ""
     );
@@ -1444,7 +1448,7 @@ Bool TargetGenerator::generateEarlyInc(
   PREPARE_ARG(context, block, Block);
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(type, tgType, Type);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   if (tgType->isDerivedFrom<IntegerType>()) {
     auto integerType = static_cast<IntegerType*>(tgType);
@@ -1484,7 +1488,7 @@ Bool TargetGenerator::generateEarlyDec(
   PREPARE_ARG(context, block, Block);
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(type, tgType, Type);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   if (tgType->isDerivedFrom<IntegerType>()) {
     auto integerType = static_cast<IntegerType*>(tgType);
@@ -1524,7 +1528,7 @@ Bool TargetGenerator::generateLateInc(
   PREPARE_ARG(context, block, Block);
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(type, tgType, Type);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   if (tgType->isDerivedFrom<IntegerType>()) {
     auto integerType = static_cast<IntegerType*>(tgType);
@@ -1564,7 +1568,7 @@ Bool TargetGenerator::generateLateDec(
   PREPARE_ARG(context, block, Block);
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(type, tgType, Type);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   if (tgType->isDerivedFrom<IntegerType>()) {
     auto integerType = static_cast<IntegerType*>(tgType);
@@ -1605,7 +1609,7 @@ Bool TargetGenerator::generateShrAssign(
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(srcVal, srcValBox, Value);
   PREPARE_ARG(type, tgType, IntegerType);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   if (tgType->isSigned()) {
     llvmResult = block->getIrBuilder()->CreateAShr(llvmVal, srcValBox->getLlvmValue());
@@ -1625,7 +1629,7 @@ Bool TargetGenerator::generateShlAssign(
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(srcVal, srcValBox, Value);
   PREPARE_ARG(type, tgType, IntegerType);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   llvmResult = block->getIrBuilder()->CreateShl(llvmVal, srcValBox->getLlvmValue());
   block->getIrBuilder()->CreateStore(llvmResult, destVarBox->getLlvmValue());
@@ -1641,7 +1645,7 @@ Bool TargetGenerator::generateAndAssign(
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(srcVal, srcValBox, Value);
   PREPARE_ARG(type, tgType, IntegerType);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   llvmResult = block->getIrBuilder()->CreateAnd(llvmVal, srcValBox->getLlvmValue());
   block->getIrBuilder()->CreateStore(llvmResult, destVarBox->getLlvmValue());
@@ -1657,7 +1661,7 @@ Bool TargetGenerator::generateOrAssign(
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(srcVal, srcValBox, Value);
   PREPARE_ARG(type, tgType, IntegerType);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   llvmResult = block->getIrBuilder()->CreateOr(llvmVal, srcValBox->getLlvmValue());
   block->getIrBuilder()->CreateStore(llvmResult, destVarBox->getLlvmValue());
@@ -1673,7 +1677,7 @@ Bool TargetGenerator::generateXorAssign(
   PREPARE_ARG(destVar, destVarBox, Value);
   PREPARE_ARG(srcVal, srcValBox, Value);
   PREPARE_ARG(type, tgType, IntegerType);
-  auto llvmVal = block->getIrBuilder()->CreateLoad(destVarBox->getLlvmValue());
+  auto llvmVal = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), destVarBox->getLlvmValue());
   llvm::Value *llvmResult;
   llvmResult = block->getIrBuilder()->CreateXor(llvmVal, srcValBox->getLlvmValue());
   block->getIrBuilder()->CreateStore(llvmResult, destVarBox->getLlvmValue());
@@ -1692,7 +1696,7 @@ Bool TargetGenerator::generateNextArg(
   if (tgType->getLlvmType()->isStructTy()) {
     auto llvmPtrType = tgType->getLlvmType()->getPointerTo();
     auto llvmPtr = block->getIrBuilder()->CreateVAArg(srcValBox->getLlvmValue(), llvmPtrType);
-    llvmResult = block->getIrBuilder()->CreateLoad(llvmPtr);
+    llvmResult = block->getIrBuilder()->CreateLoad(tgType->getLlvmType(), llvmPtr);
   } else {
     llvmResult = block->getIrBuilder()->CreateVAArg(srcValBox->getLlvmValue(), tgType->getLlvmType());
   }
