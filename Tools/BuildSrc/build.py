@@ -203,14 +203,9 @@ def build_alusus(alusus_build_location: str,
         # Install STD binaries.
         msg.info_msg("Installing Alusus STD binary dependencies...")
         bins_to_install = []
-        if alusus_target_triplet.value.platform == "linux":
+        if alusus_target_triplet.value.platform == "linux" or alusus_target_triplet.value.platform == "darwin":
             bins_to_install = [
-                ("wasm-ld", "wasm-ld")
-            ]
-            # TODO: Add more bins to install as needed here.
-        elif alusus_target_triplet.value.platform == "darwin":
-            bins_to_install = [
-                ("wasm-ld", "wasm-ld")
+                (os.path.join("llvm", "wasm-ld"), "wasm-ld")
             ]
             # TODO: Add more bins to install as needed here.
         elif alusus_target_triplet.value.platform == "win32":
@@ -221,10 +216,7 @@ def build_alusus(alusus_build_location: str,
         # TODO: Add more logic for other targets here.
 
         std_bins_location = os.path.join(
-            alusus_build_location, "vcpkg_installed", alusus_target_triplet.value.vcpkg_target_triplet, "bin")
-        if alusus_target_triplet.value.platform == "win32":
-            std_bins_location = os.path.join(
-                alusus_build_location, "vcpkg_installed", alusus_target_triplet.value.vcpkg_target_triplet, "tools")
+            alusus_build_location, "vcpkg_installed", alusus_target_triplet.value.vcpkg_target_triplet, "tools")
         alusus_bins_install_location = os.path.join(
             alusus_install_location, alusus_bin_dirname)
 
