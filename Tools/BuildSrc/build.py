@@ -28,7 +28,8 @@ def build_alusus(alusus_build_location: str,
                  alusus_include_dirname: str,
                  skip_installing_std_deps: bool,
                  verbose_output: bool = False,
-                 force_cmake_generator: str = None):
+                 force_cmake_generator: str = None,
+                 use_rpath: bool = True):
 
     os.makedirs(alusus_build_location, exist_ok=True)
     os.makedirs(alusus_install_location, exist_ok=True)
@@ -89,7 +90,10 @@ def build_alusus(alusus_build_location: str,
         "-DALUSUS_LIB_DIR_NAME={alusus_lib_dirname}".format(
             alusus_lib_dirname=alusus_lib_dirname),
         "-DALUSUS_INCLUDE_DIR_NAME={alusus_include_dirname}".format(
-            alusus_include_dirname=alusus_include_dirname)
+            alusus_include_dirname=alusus_include_dirname),
+        "-DALUSUS_USE_RPATH={alusus_use_rpath}".format(
+            alusus_use_rpath=("ON" if use_rpath else "OFF")
+        )
     ]
     if force_cmake_generator:
         msg.info_msg("Using forced {cmake_generator} CMake generator with the CMake configuration.".format(
@@ -267,6 +271,8 @@ def parse_cmd_args(args):
                         type=str, default="Include", help="Alusus include folder name inside Alusus install location")
     parser.add_argument("--force-cmake-generator",
                         type=str, help="Use specific CMake generator")
+    parser.add_argument("--skip-rpath", action="store_true",
+                        help="Don't use RPATH on supported systems")
     parser.add_argument("--skip-installing-std-deps",
                         help="Whether or not to skip installing the standard libraries dependencies", action="store_true")
     parser.add_argument("--print-supported-build-types", action="store_true",
@@ -341,7 +347,8 @@ if __name__ == "__main__":
                        args.include_dirname,
                        args.skip_installing_std_deps,
                        verbose_output=args.verbose,
-                       force_cmake_generator=args.force_cmake_generator)
+                       force_cmake_generator=args.force_cmake_generator,
+                       use_rpath=(not args.skip_rpath))
     if not ret:
         exit(1)
 

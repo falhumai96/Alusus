@@ -7,9 +7,6 @@
 project(AlususTests)
 cmake_minimum_required(VERSION 3.20.0)
 
-# Prepare compile flags.
-set(AlususTests_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -fvisibility=hidden")
-
 # Header and library files paths for LLVM
 include_directories("${LLVM_INCLUDE_DIRS}")
 link_directories("${LLVM_LIBRARY_DIRS}")
@@ -48,9 +45,9 @@ source_group("SourceFiles\\General" FILES ${AlususTests_Source_Files})
 source_group("HeaderFiles\\General" FILES ${AlususTests_Header_Files})
 source_group("TestFiles\\General" FILES ${AlususTests_Test_Files} ${AlususTests_Test_Files_Output})
 
-if(MSVC)
-  add_definitions("/wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
-endif(MSVC)
+# if(MSVC)
+#   add_definitions("/wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
+# endif()
 
 set(AlususTestsSourceFiles
   ${AlususTests_Source_Files}
@@ -60,25 +57,39 @@ set(AlususTestsSourceFiles
 )
 
 add_executable(AlususTests ${AlususTestsSourceFiles} ${AlususTests_Header_Files})
-set_target_properties(AlususTests PROPERTIES COMPILE_FLAGS "${AlususTests_COMPILE_FLAGS}")
-
-# Set output names.
-set_target_properties(AlususTests PROPERTIES OUTPUT_NAME alusus_tests)
-set_target_properties(AlususTests PROPERTIES DEBUG_OUTPUT_NAME alusus_tests.dbg)
-set_target_properties(AlususTests PROPERTIES VERSION ${AlususVersion})
+set_target_properties(AlususTests PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET hidden
+  C_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  OUTPUT_NAME alusus_tests
+  DEBUG_OUTPUT_NAME alusus_tests.dbg
+  VERSION ${AlususVersion}
+)
 
 # Finally, we link Alusus libraries to our UnitTests project.
-target_link_libraries(AlususTests AlususSrlLib AlususCoreLib AlususStorage "dl")
+target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage ${CMAKE_DL_LIBS})
 
 # Build C++ interoperability test lib.
 set(CppInteropTest_Source_Files cpp_interop_test.cpp)
 add_library(CppInteropTest SHARED ${CppInteropTest_Source_Files})
-set_target_properties(CppInteropTest PROPERTIES COMPILE_FLAGS "${FPIC} ${Alusus_COMPILE_FLAGS}")
-set_target_properties(CppInteropTest PROPERTIES OUTPUT_NAME cpp_interop_test)
-set_target_properties(CppInteropTest PROPERTIES DEBUG_OUTPUT_NAME cpp_interop_test)
-set_target_properties(CppInteropTest PROPERTIES VERSION ${AlususVersion})
-set_target_properties(CppInteropTest PROPERTIES SHLIBVERSION ${AlususShlibVersion})
-target_link_libraries(CppInteropTest AlususSrlLib AlususCoreLib AlususStorage)
+set_target_properties(CppInteropTest PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET hidden
+  C_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  OUTPUT_NAME cpp_interop_test
+  DEBUG_OUTPUT_NAME cpp_interop_test
+  VERSION ${AlususVersion}
+  SHLIBVERSION ${AlususShlibVersion}
+)
+target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage)
 
 add_test(NAME Core
   COMMAND AlususTests "Core" ".alusus"

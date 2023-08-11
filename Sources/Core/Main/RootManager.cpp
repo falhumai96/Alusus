@@ -266,7 +266,7 @@ Bool RootManager::findFile(Char const *filename, std::array<Char,PATH_MAX> &resu
   // Is the filename an absolute path already?
   if (filename[0] == C('/')) {
     if (this->tryFileName(filename, tmpFilename)) {
-        #ifdef WINDOWS
+        #if defined(_WIN32) || defined(WIN32)
           _fullpath(resultFilename.data(), tmpFilename.data(), PATH_MAX);
         #else
           realpath(tmpFilename.data(), resultFilename.data());
@@ -286,7 +286,7 @@ Bool RootManager::findFile(Char const *filename, std::array<Char,PATH_MAX> &resu
       copyStr(filename, fullPath.data() + len);
 
       if (this->tryFileName(fullPath.data(), tmpFilename)) {
-        #ifdef WINDOWS
+        #if defined(_WIN32) || defined(WIN32)
           _fullpath(resultFilename.data(), tmpFilename.data(), PATH_MAX);
         #else
           realpath(tmpFilename.data(), resultFilename.data());
@@ -325,7 +325,7 @@ Bool RootManager::tryFileName(Char const *path, std::array<Char,PATH_MAX> &resul
 
   #ifndef RELEASE
     // Try debug library extension.
-    #ifdef WINDOWS
+    #if defined(_WIN32) || defined(WIN32)
       copyStr(path, resultFilename.data());
       copyStr(S(".dbg.dll"), resultFilename.data()+pathLen);
     #elif __APPLE__
@@ -343,7 +343,7 @@ Bool RootManager::tryFileName(Char const *path, std::array<Char,PATH_MAX> &resul
   #endif
 
   // Try normal lib.
-  #ifdef WINDOWS
+  #if defined(_WIN32) || defined(WIN32)
     copyStr(path, resultFilename.data());
     copyStr(S(".dll"), resultFilename.data()+pathLen);
   #elif __APPLE__

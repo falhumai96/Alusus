@@ -299,7 +299,7 @@ namespace Core::Basic
  * should only be used in cases where the allocated memory is relatively
  * small.
  */
-#ifdef WINDOWS
+#if defined(_WIN32) || defined(WIN32)
   #define SALLOC(s) alloca(s)
 #else
   #define SALLOC(s) alloca(s)
@@ -311,7 +311,7 @@ namespace Core::Basic
  * @ingroup basic_macros
  * @sa SALLOC
  */
-#ifdef WINDOWS
+#if defined(_WIN32) || defined(WIN32)
   #define SFREE(p) _freea(p);
 #else
   #define SFREE(p)

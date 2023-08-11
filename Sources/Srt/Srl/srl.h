@@ -12,6 +12,7 @@
 
 // System header files
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
@@ -54,7 +55,7 @@ typedef long int LongInt;
  * This is used for pointer arithmetics.
  * @ingroup srl
  */
-typedef long int ArchInt;
+typedef intptr_t ArchInt;
 
 /// @ingroup srl
 typedef float Float;
@@ -79,10 +80,10 @@ typedef std::stringstream StrStream;
 
 /**
  * @brief A word of the same size as pointers.
- * This is used for things lik IDs that need to be the same size as pointers.
+ * This is used for things like IDs that need to be the same size as pointers.
  * @ingroup srl
  */
-typedef unsigned long int PtrWord;
+typedef uintptr_t PtrWord;
 
 //==============================================================================
 // Basic Macros

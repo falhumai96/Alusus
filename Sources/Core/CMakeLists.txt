@@ -4,11 +4,15 @@
 # For details on usage and copying conditions read the full license in the
 # accompanying license file or at <https://alusus.org/license.html>.
 
+# NOTE: For alusus_storage, we'll use the same filename for both debug and
+#       release versions. This is important in cases where the user is running
+#       the debug version of the core and is including a release version of a
+#       library that also need to link to alusus_storage. We should only have
+#       one alusus_storage loaded so that there is only one global storage.
+#       Having two separate global storages may result in undefined behavior.
+
 project(AlususCore)
 cmake_minimum_required(VERSION 3.20.0)
-
-# Prepare compile flags.
-set(AlususCore_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -fvisibility=hidden")
 
 # Header and library files paths for AlususSrl
 include_directories("${AlususSrl_SOURCE_DIR}")
@@ -20,7 +24,19 @@ set(CMAKE_MODULE_PATH "${AlususCore_SOURCE_DIR}")
 # Add a target for Alusus global storage.
 set(AlususStorage_Source_Files core_global_storage.cpp core_global_storage.h)
 add_library(AlususStorage SHARED ${AlususStorage_Source_Files})
-set_target_properties(AlususStorage PROPERTIES COMPILE_FLAGS "${FPIC} ${AlususCore_COMPILE_FLAGS}")
+set_target_properties(AlususStorage PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET hidden
+  C_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  OUTPUT_NAME alusus_storage
+  DEBUG_OUTPUT_NAME alusus_storage
+  VERSION ${AlususVersion}
+  SHLIBVERSION ${AlususShlibVersion}
+)
 
 # Add a target for Alusus core library.
 set(AlususCoreLib_Source_Subdirs Basic Data Data/Grammar Data/Ast Notices Processing Processing/Handlers Main)
@@ -33,48 +49,59 @@ foreach (DIR ${AlususCoreLib_Source_Subdirs})
   set(AlususCoreLib_Source_Files ${AlususCoreLib_Source_Files} ${sources} ${headers})
 endforeach(DIR)
 add_library(AlususCoreLib STATIC ${AlususCoreLib_Source_Files})
-set_target_properties(AlususCoreLib PROPERTIES COMPILE_FLAGS "${FPIC} ${AlususCore_COMPILE_FLAGS}")
+set_target_properties(AlususCoreLib PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET hidden
+  C_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  OUTPUT_NAME alusus_core
+  DEBUG_OUTPUT_NAME alusus_core.dbg
+  VERSION ${AlususVersion}
+)
 target_precompile_headers(AlususCoreLib PRIVATE "core.h")
 
 # Add a target for Alusus core executable.
 set(AlususCore_Source_Files start.cpp interop.cpp)
 add_executable(AlususCore ${AlususCore_Source_Files})
-set_target_properties(AlususCore PROPERTIES COMPILE_FLAGS "${AlususCore_COMPILE_FLAGS}")
+set_target_properties(AlususCore PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET hidden
+  C_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  OUTPUT_NAME alusus
+  DEBUG_OUTPUT_NAME alusus.dbg
+  VERSION ${AlususVersion}
+)
 target_precompile_headers(AlususCore PRIVATE "core.h")
 
 # Finally, we link the executable to the libraries.
-target_link_libraries(AlususCore AlususSrlLib AlususCoreLib AlususStorage "dl")
+target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage ${CMAKE_DL_LIBS})
 
-# Set library and executable output names.
-# NOTE: For alusus_storage, we'll use the same filename for both debug and
-#       release versions. This is important in cases where the user is running
-#       the debug version of the core and is including a release version of a
-#       library that also need to link to alusus_storage. We should only have
-#       one alusus_storage loaded so that there is only one global storage.
-#       Having two separate global storages may result in undefined behavior.
-set_target_properties(AlususStorage PROPERTIES OUTPUT_NAME alusus_storage)
-set_target_properties(AlususStorage PROPERTIES DEBUG_OUTPUT_NAME alusus_storage)
-set_target_properties(AlususStorage PROPERTIES VERSION ${AlususVersion})
-set_target_properties(AlususStorage PROPERTIES SHLIBVERSION ${AlususShlibVersion})
-set_target_properties(AlususCoreLib PROPERTIES OUTPUT_NAME alusus_core)
-set_target_properties(AlususCoreLib PROPERTIES DEBUG_OUTPUT_NAME alusus_core.dbg)
-set_target_properties(AlususCoreLib PROPERTIES VERSION ${AlususVersion})
-set_target_properties(AlususCore PROPERTIES OUTPUT_NAME alusus)
-set_target_properties(AlususCore PROPERTIES DEBUG_OUTPUT_NAME alusus.dbg)
-set_target_properties(AlususCore PROPERTIES VERSION ${AlususVersion})
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # macOS has a different mechanism for RPATH than Linux and requires special
-  # handling. More information can be found here:
-  #
-  # https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-  #
-  # The following article also has a good explanation:
-  #
-  # https://blogs.oracle.com/dipol/dynamic-libraries,-rpath,-and-mac-os
-  set_target_properties(AlususCore PROPERTIES LINK_FLAGS "-Wl,-rpath,@executable_path,-rpath,@executable_path/../${ALUSUS_LIB_DIR_NAME}/")
-else()
-  set_target_properties(AlususCore PROPERTIES LINK_FLAGS "-Wl,-rpath,'$ORIGIN',-rpath,'$ORIGIN/../${ALUSUS_LIB_DIR_NAME}/'")
+if (DEFINED ALUSUS_USE_RPATH AND ALUSUS_USE_RPATH)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # macOS has a different mechanism for RPATH than Linux and requires special
+    # handling. More information can be found here:
+    #
+    # https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+    #
+    # The following article also has a good explanation:
+    #
+    # https://blogs.oracle.com/dipol/dynamic-libraries,-rpath,-and-mac-os
+    set_target_properties(AlususCore PROPERTIES
+      MACOSX_RPATH TRUE
+      INSTALL_RPATH "@executable_path;@executable_path/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set_target_properties(AlususCore PROPERTIES
+      INSTALL_RPATH "$ORIGIN;$ORIGIN/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  endif()
 endif()
 
 # Copy libary header files to installation directory.

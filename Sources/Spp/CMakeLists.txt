@@ -24,7 +24,7 @@ execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs core mcjit o
                 OUTPUT_VARIABLE REQ_LLVM_LIBRARIES)
 execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --system-libs
                 OUTPUT_VARIABLE REQ_SYSTEM_LIBRARIES)
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # Replace -llibxml2.tbd with -lxml2 in REQ_SYSTEM_LIBRARIES to fix issue in macOS.
   # TODO: Remove this hack after moving to a newer version of LLVM that fixes it.
   string(REPLACE "-llibxml2.tbd" "-lxml2" REQ_SYSTEM_LIBRARIES ${REQ_SYSTEM_LIBRARIES})
@@ -58,29 +58,30 @@ foreach (dir ${AlususSpp_SOURCE_SUBDIRS})
   set(AlususSpp_SOURCE_FILES ${AlususSpp_SOURCE_FILES} ${sources} ${headers})
 endforeach(dir)
 
-if(MSVC)
-  add_definitions("/wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
-endif(MSVC)
+# if(MSVC)
+#   add_definitions("/wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
+# endif()
 
 # Create AlususSpp library project.
 add_library(AlususSpp SHARED ${AlususSpp_SOURCE_FILES})
-set_target_properties(AlususSpp PROPERTIES COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}")
+set_target_properties(AlususSpp PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  OUTPUT_NAME alusus_spp
+  DEBUG_OUTPUT_NAME alusus_spp.dbg
+  VERSION ${AlususVersion}
+  SHLIBVERSION ${AlususShlibVersion}
+)
 target_precompile_headers(AlususSpp PRIVATE "spp.h")
 
-# Set output names.
-set_target_properties(AlususSpp PROPERTIES OUTPUT_NAME alusus_spp)
-set_target_properties(AlususSpp PROPERTIES DEBUG_OUTPUT_NAME alusus_spp.dbg)
-set_target_properties(AlususSpp PROPERTIES VERSION ${AlususVersion})
-set_target_properties(AlususSpp PROPERTIES SHLIBVERSION ${AlususShlibVersion})
-
 # Finally, we link LLVM and AlususCore libraries to our library.
-target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES})
-target_link_libraries(AlususSpp PRIVATE ${REQ_SYSTEM_LIBRARIES})
-target_link_libraries(AlususSpp PRIVATE AlususSrlLib AlususCoreLib AlususStorage)
+target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage)
+
 # Prevent the exporting of LLVM symbols
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(LinkerVersionScript -Wl,-exported_symbols_list,${AlususSpp_SOURCE_DIR}/macos_exported_symbols.txt)
-else()
+elseif(AlususCompilerUsed STREQUAL "GCC" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(LinkerVersionScript -Wl,--version-script,${AlususSpp_SOURCE_DIR}/linker_version_script.map)
 endif()
 target_link_libraries(AlususSpp PRIVATE ${LinkerVersionScript})

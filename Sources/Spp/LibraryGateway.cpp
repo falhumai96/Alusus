@@ -330,7 +330,7 @@ void LibraryGateway::initializeGlobalItemRepo(Core::Main::RootManager *manager)
   auto coreBinPath = manager->getCoreBinPath().getBuf();
 
   Char const *platform;
-  #ifdef WINDOWS
+  #if defined(_WIN32) || defined(WIN32)
     platform = "windows";
   #elif __APPLE__
     platform = "macos";

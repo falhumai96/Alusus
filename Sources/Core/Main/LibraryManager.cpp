@@ -10,8 +10,13 @@
  */
 //==============================================================================
 
-#include "core.h"
+#if defined(_WIN32) || defined(WIN32)
+#include <Windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
+#include "core.h"
 
 namespace Core::Main
 {
@@ -87,21 +92,84 @@ LibraryGateway* LibraryManager::getGateway(Char const *libId)
 }
 
 
+
+
+#if defined(_WIN32) || defined(WIN32)
+// Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+// Adapted from https://stackoverflow.com/a/17387176 [accessed August 8th, 2023].
+std::string GetLastErrorAsString()
+{
+    //Get the error message ID, if any.
+    DWORD errorMessageID = ::GetLastError();
+    if(errorMessageID == 0) {
+        return std::string(); //No error message has been recorded
+    }
+
+    LPSTR messageBuffer = nullptr;
+
+    // Ask Win32 to give us the string version of that message ID.
+    // The parameters we pass in, tell Win32 to create the buffer that holds the message for us (because we don't yet know how long the message string will be).
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+    //Copy the error message into a std::string.
+    std::string message(messageBuffer, size);
+
+    //Free the Win32's string's buffer.
+    LocalFree(messageBuffer);
+
+    return message;
+}
+#endif
+
+
 PtrWord LibraryManager::load(Char const *path, Str &error)
 {
-  void *handle = dlopen(path, RTLD_NOW|RTLD_GLOBAL);
-  if (handle == 0) {
+
+#if defined(_WIN32) || defined(WIN32)
+
+  HMODULE handle = LoadLibraryA(path);
+  if (!handle) {
+    if (error.getLength() != 0) error += S("\n");
+    auto errorString = GetLastErrorAsString();
+    error += errorString.c_str();
+    return 0;
+  }
+
+  // Get the library gateway if this library supports it, otherwise we'll just load the library.
+  LibraryGateway *gateway = nullptr;
+  LibraryGatewayGetter fn = reinterpret_cast<LibraryGatewayGetter>(GetProcAddress(handle, LIBRARY_GATEWAY_GETTER_NAME));
+  if (fn != nullptr) {
+    gateway = fn();
+    if (gateway == nullptr) {
+      FreeLibrary(handle);
+      return 0;
+    }
+  }
+
+  PtrWord id = reinterpret_cast<PtrWord>(handle);
+  this->addLibrary(id, gateway);
+  return id;
+
+#else
+
+  auto flags = RTLD_NOW | RTLD_GLOBAL;
+#if defined(__linux__)
+  flags |= RTLD_DEEPBIND; // To start lookup symbols from the library itself initially.
+#endif
+  void *handle = dlopen(path, flags);
+  if (!handle) {
     if (error.getLength() != 0) error += S("\n");
     error += dlerror();
     return 0;
   }
 
   // Get the library gateway if this library supports it, otherwise we'll just load the library.
-  LibraryGateway *gateway = 0;
+  LibraryGateway *gateway = nullptr;
   LibraryGatewayGetter fn = reinterpret_cast<LibraryGatewayGetter>(dlsym(handle, LIBRARY_GATEWAY_GETTER_NAME));
-  if (fn != 0) {
+  if (fn) {
     gateway = fn();
-    if (gateway == 0) {
+    if (!gateway) {
       dlclose(handle);
       return 0;
     }
@@ -110,6 +178,9 @@ PtrWord LibraryManager::load(Char const *path, Str &error)
   PtrWord id = reinterpret_cast<PtrWord>(handle);
   this->addLibrary(id, gateway);
   return id;
+
+#endif
+
 }
 
 

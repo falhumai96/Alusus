@@ -15,7 +15,7 @@ if (NOT DEFINED Python3_EXECUTABLE)
   # CMake Error at /usr/share/cmake-3.25/Modules/FindPython/Support.cmake:1887 (list):
   # list index: 10 out of range (-10, 9)
 
-  find_package(Python3 COMPONENTS Interpreter)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
   set(Python3_EXECUTABLE "${Python3_EXECUTABLE}" CACHE STRING
     "Python 3 executable")
 endif ()
@@ -55,42 +55,61 @@ set(ALUSUS_BIN_DIR_NAME "bin" CACHE STRING "The Alusus \"bin\" directory name")
 set(ALUSUS_LIB_DIR_NAME "lib" CACHE STRING "The Alusus \"lib\" directory name")
 set(ALUSUS_INCLUDE_DIR_NAME "include" CACHE STRING "The Alusus \"include\" directory name")
 
-if (NOT WIN32)
-  if (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    set(FPIC "-fPIC")
-  else ()
-    set(FPIC "-fpic")
-  endif ()
-endif ()
+# Detect the supported compiler used.
+function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR)
+  if(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "MSVC")
+    # Visual Studio MSVC compiler.
+    set(${RETURN_VALUE_VAR} "Cl" PARENT_SCOPE)
+  elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "GNU")
+    # GNU GCC compiler.
+    set(${RETURN_VALUE_VAR} "GCC" PARENT_SCOPE)
+  elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "AppleClang")
+    # Apple Clang compiler.
+    set(${RETURN_VALUE_VAR} "AppleClang" PARENT_SCOPE)
+  elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "Clang")
+    if(NOT DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT OR
+       (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL "GNU") OR
+       (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL ""))
+      if(NOT DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID OR
+         (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL "GNU") OR
+         (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL ""))
+        # GNU Clang compiler.
+        set(${RETURN_VALUE_VAR} "GNUClang" PARENT_SCOPE)
+      elseif(DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL "MSVC")
+        # MSVC Clang compiler with GNU frontend.
+        set(${RETURN_VALUE_VAR} "MSVCClang" PARENT_SCOPE)
+      else()
+        message(FATAL_ERROR "Unknown ${COMPILER_TO_CHECK} compiler.")
+      endif()
+    elseif(DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+      # MSVC Clang compiler with MSVC frontend. It will be treated like the Visual Studio MSVC compiler.
+      set(${RETURN_VALUE_VAR} "Cl" PARENT_SCOPE)
+    else()
+      message(FATAL_ERROR "Unknown ${COMPILER_TO_CHECK} compiler.")
+    endif()
+  else()
+    message(FATAL_ERROR "Unknown ${COMPILER_TO_CHECK} compiler.")
+  endif()
+endfunction()
 
 
-# Prepare compile and link flags.
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  message(STATUS "Using Clang")
-  # CLang options
-  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-const-variable -Wno-unused-result -fno-rtti")
-  set(Alusus_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -std=c++17")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # GCC options
-  message(STATUS "Using GCC")
-  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-but-set-parameter -Wunused-but-set-variable -Wno-unused-result -fno-rtti")
-  set(Alusus_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -std=c++17")
+alusus_get_compiler_used("CXX" AlususCompilerUsed)
+message("Compiler used=${AlususCompilerUsed}")
+
+# Prepare compile and link flags based on the compiler selected.
+if(AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "MSVCClang" OR AlususCompilerUsed STREQUAL "AppleClang")
+  # Clang with GNU interface options.
+  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-const-variable -Wno-unused-result -fno-rtti -fvisibility=hidden")
+elseif (AlususCompilerUsed STREQUAL "GCC")
+  # GCC with GNU interface options.
+  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-but-set-parameter -Wunused-but-set-variable -Wno-unused-result -fno-rtti -fvisibility=hidden")
+elseif(AlususCompilerUsed STREQUAL "Cl")
+  # MSVC Cl or Clangf with MSVC Cl interface options.
+  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} /w44265 /w44130 /w44296 /wd4100 /wd4101 /wd4189 /EHsc /wd4005 /wd4146 /wd4355 /wd4800 /wd4996")  
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # macOS has a different mechanism for RPATH than Linux and requires special
-  # handling. More information can be found here:
-  #
-  # https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-  #
-  # The following article also has a good explanation:
-  #
-  # https://blogs.oracle.com/dipol/dynamic-libraries,-rpath,-and-mac-os
-  set(CMAKE_MACOSX_RPATH TRUE)
-  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,@executable_path")
-else()
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(CMAKE_SKIP_RPATH TRUE)
-  set(CMAKE_EXE_LINKER_FLAGS "-Wl,-rpath,'$ORIGIN',--enable-new-dtags")
 endif()
 
 # Clear CMAKE_CXX_FLAGS_* because we are going to provide our own compilation
@@ -100,11 +119,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS "")
 
 # Incorporate the CMake features provided by LLVM.
-find_package(LLVM)
+find_package(LLVM REQUIRED)
 
 # Macro for generating pre-compiled headers.
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${Alusus_SOURCE_DIR}")
-include(precompiled_headers.cmake)
 
 # Enable testing
 enable_testing()

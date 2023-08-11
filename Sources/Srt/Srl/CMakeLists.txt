@@ -7,8 +7,6 @@
 project(AlususSrl)
 cmake_minimum_required(VERSION 3.20.0)
 
-# Prepare compile flags.
-set(AlususSrl_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -fvisibility=hidden")
 if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS RELEASE)
 else()
@@ -24,13 +22,19 @@ file(GLOB headers *.h)
 file(GLOB sources *.cpp)
 set(AlususSrlLib_Source_Files ${AlususSrlLib_Source_Files} ${sources} ${headers})
 add_library(AlususSrlLib STATIC ${AlususSrlLib_Source_Files})
-set_target_properties(AlususSrlLib PROPERTIES COMPILE_FLAGS "${FPIC} ${AlususSrl_COMPILE_FLAGS}")
+set_target_properties(AlususSrlLib PROPERTIES
+  COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET hidden
+  C_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+  OUTPUT_NAME alusus_srl
+  DEBUG_OUTPUT_NAME alusus_srl.dbg
+  VERSION ${AlususVersion}
+)
 target_precompile_headers(AlususSrlLib PRIVATE "srl.h")
-
-# Set library and executable output names.
-set_target_properties(AlususSrlLib PROPERTIES OUTPUT_NAME alusus_srl)
-set_target_properties(AlususSrlLib PROPERTIES DEBUG_OUTPUT_NAME alusus_srl.dbg)
-set_target_properties(AlususSrlLib PROPERTIES VERSION ${AlususVersion})
 
 # Copy libary header files to installation directory.
 install_files("/${ALUSUS_INCLUDE_DIR_NAME}/Srl" FILES srl.h)
