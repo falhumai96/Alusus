@@ -58,10 +58,6 @@ foreach (dir ${AlususSpp_SOURCE_SUBDIRS})
   set(AlususSpp_SOURCE_FILES ${AlususSpp_SOURCE_FILES} ${sources} ${headers})
 endforeach(dir)
 
-# if(MSVC)
-#   add_definitions("/wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
-# endif()
-
 # Create AlususSpp library project.
 add_library(AlususSpp SHARED ${AlususSpp_SOURCE_FILES})
 set_target_properties(AlususSpp PROPERTIES
@@ -74,17 +70,20 @@ set_target_properties(AlususSpp PROPERTIES
   SHLIBVERSION ${AlususShlibVersion}
 )
 target_precompile_headers(AlususSpp PRIVATE "spp.h")
+if (ALUSUS_WIN32_UNICODE)
+  target_compile_definitions(AlususSpp PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
+endif()
 
 # Finally, we link LLVM and AlususCore libraries to our library.
-target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage)
+target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon)
 
 # Prevent the exporting of LLVM symbols
 if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(LinkerVersionScript -Wl,-exported_symbols_list,${AlususSpp_SOURCE_DIR}/macos_exported_symbols.txt)
+  target_link_libraries(AlususSpp PRIVATE -Wl,-exported_symbols_list,${AlususSpp_SOURCE_DIR}/macos_exported_symbols.txt)
 elseif(AlususCompilerUsed STREQUAL "GCC" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(LinkerVersionScript -Wl,--version-script,${AlususSpp_SOURCE_DIR}/linker_version_script.map)
+  target_link_libraries(AlususSpp PRIVATE -Wl,--version-script,${AlususSpp_SOURCE_DIR}/linker_version_script.map)
 endif()
-target_link_libraries(AlususSpp PRIVATE ${LinkerVersionScript})
+#TODO: Add export symbols for Windows.
 
 # Copy libary header files to installation directory.
 install_files("/${ALUSUS_INCLUDE_DIR_NAME}/Spp" FILES

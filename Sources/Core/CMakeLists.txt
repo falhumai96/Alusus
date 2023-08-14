@@ -37,6 +37,10 @@ set_target_properties(AlususStorage PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
+target_link_libraries(AlususStorage PRIVATE AlususOSCommon)
+if (ALUSUS_WIN32_UNICODE)
+  target_compile_definitions(AlususStorage PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
+endif()
 
 # Add a target for Alusus core library.
 set(AlususCoreLib_Source_Subdirs Basic Data Data/Grammar Data/Ast Notices Processing Processing/Handlers Main)
@@ -62,6 +66,10 @@ set_target_properties(AlususCoreLib PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCoreLib PRIVATE "core.h")
+target_link_libraries(AlususCoreLib PRIVATE AlususOSCommon)
+if (ALUSUS_WIN32_UNICODE)
+  target_compile_definitions(AlususCoreLib PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
+endif()
 
 # Add a target for Alusus core executable.
 set(AlususCore_Source_Files start.cpp interop.cpp)
@@ -79,11 +87,14 @@ set_target_properties(AlususCore PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCore PRIVATE "core.h")
+if (ALUSUS_WIN32_UNICODE)
+  target_compile_definitions(AlususCore PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
+endif()
 
 # Finally, we link the executable to the libraries.
-target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage ${CMAKE_DL_LIBS})
+target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon ${CMAKE_DL_LIBS})
 
-if (DEFINED ALUSUS_USE_RPATH AND ALUSUS_USE_RPATH)
+if (ALUSUS_USE_RPATH)
   if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # macOS has a different mechanism for RPATH than Linux and requires special
     # handling. More information can be found here:

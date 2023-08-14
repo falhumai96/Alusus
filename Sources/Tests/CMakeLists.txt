@@ -45,10 +45,6 @@ source_group("SourceFiles\\General" FILES ${AlususTests_Source_Files})
 source_group("HeaderFiles\\General" FILES ${AlususTests_Header_Files})
 source_group("TestFiles\\General" FILES ${AlususTests_Test_Files} ${AlususTests_Test_Files_Output})
 
-# if(MSVC)
-#   add_definitions("/wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
-# endif()
-
 set(AlususTestsSourceFiles
   ${AlususTests_Source_Files}
   ${AlususTests_Header_Files}
@@ -69,9 +65,12 @@ set_target_properties(AlususTests PROPERTIES
   DEBUG_OUTPUT_NAME alusus_tests.dbg
   VERSION ${AlususVersion}
 )
+if (ALUSUS_WIN32_UNICODE)
+  target_compile_definitions(AlususTests PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
+endif()
 
 # Finally, we link Alusus libraries to our UnitTests project.
-target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage ${CMAKE_DL_LIBS})
+target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon ${CMAKE_DL_LIBS})
 
 # Build C++ interoperability test lib.
 set(CppInteropTest_Source_Files cpp_interop_test.cpp)
@@ -89,7 +88,10 @@ set_target_properties(CppInteropTest PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
-target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage)
+target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon)
+if (ALUSUS_WIN32_UNICODE)
+  target_compile_definitions(CppInteropTest PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
+endif()
 
 add_test(NAME Core
   COMMAND AlususTests "Core" ".alusus"

@@ -5,6 +5,17 @@
 project(Alusus)
 cmake_minimum_required(VERSION 3.20.0)
 
+# Build options.
+option(ALUSUS_BIN_DIR_NAME "The Alusus \"bin\" directory name" "bin")
+option(ALUSUS_LIB_DIR_NAME "The Alusus \"lib\" directory name" "lib")
+option(ALUSUS_INCLUDE_DIR_NAME "The Alusus \"include\" directory name" "include")
+option(ALUSUS_WIN32_UNICODE "Build Alusus for Windows with Unicode support" ON)
+option(ALUSUS_USE_RPATH "Build Alusus with RPATH support for systems that support RPATH" OFF)
+
+if (NOT WIN32)
+  set(ALUSUS_WIN32_UNICODE OFF)
+endif()
+
 # Read version info.
 if (NOT DEFINED Python3_EXECUTABLE)
   # Only find Python executable once and cache it. Calling it twice will result in an
@@ -50,10 +61,6 @@ if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
 else()
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS USE_LOGS)
 endif()
-
-set(ALUSUS_BIN_DIR_NAME "bin" CACHE STRING "The Alusus \"bin\" directory name")
-set(ALUSUS_LIB_DIR_NAME "lib" CACHE STRING "The Alusus \"lib\" directory name")
-set(ALUSUS_INCLUDE_DIR_NAME "include" CACHE STRING "The Alusus \"include\" directory name")
 
 # Detect the supported compiler used.
 function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR)
@@ -139,6 +146,7 @@ if (NOT CUSTOM_OUTPUT_PATH STREQUAL "")
 endif()
 
 # Add projects
+add_subdirectory(AlususOSCommon)
 add_subdirectory(Srt)
 add_subdirectory(Core)
 add_subdirectory(Spp)

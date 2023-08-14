@@ -58,7 +58,7 @@ Srl::String getModuleDirectory()
   thread_local static std::array<Char,FILENAME_MAX> currentPath;
 
   #if defined(_WIN32) || defined(WIN32)
-    std::string path(currentPath.data(), GetModuleFileName(NULL, currentPath.data(), currentPath.size()));
+    std::string path(currentPath.data(), GetModuleFileNameA(NULL, currentPath.data(), currentPath.size()));
   #elif __APPLE__
     uint32_t size = FILENAME_MAX;
     // TODO: Check the result.

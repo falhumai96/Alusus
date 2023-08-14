@@ -13,6 +13,7 @@
 #include "core.h"
 #include <stdlib.h>
 #include <string.h>
+#include <AlususOSCommon.hpp>
 
 /**
  * @defgroup main Main
@@ -39,15 +40,21 @@ Str getSystemLanguage()
   return lang;
 }
 
-
 /**
  * @brief The entry point of the program.
  * @ingroup main
  *
  * Parse the file with the name passed from the command line.
  */
-int main(int argCount, char * const args[])
+int main(int argCount, char * const oldArgs[])
 {
+  // Set the codepage.
+  AlususOSCommon::UTF8CodePage utf8CodePage;
+
+  // Get the UTF-8 args.
+  char * const * args;
+  AlususOSCommon::getUTF8Argv(&args, oldArgs);
+
   Bool help = false;
   Bool interactive = false;
   Char const *sourceFile = 0;
