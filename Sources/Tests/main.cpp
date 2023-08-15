@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <regex>
 #include <filesystem>
+#include <AlususOSCommon.hpp>
 
 using Core::Notices::Notice;
 using Core::Data::Ast::List;
@@ -265,13 +266,13 @@ int main(int argc, char **argv)
   }
   std::filesystem::path repoPath = std::filesystem::path(__FILE__).parent_path().parent_path().parent_path();
   std::filesystem::path l18nPath = repoPath / "Notices_L18n";
+  auto l18nPathU8String = AlususOSCommon::toUTF8String(l18nPath.c_str());
   std::filesystem::path subpath = repoPath / "Sources" / "Tests" / argv[1];
   Char const *ext = argv[2];
-  // WARNING: Temporarily disable those below lines to get Windows builds to compiler. Will fix later.
   if (argc == 4 && compareStr(argv[3], S("ar")) == 0) {
-    // Core::Notices::L18nDictionary::getSingleton()->initialize(S("ar"), l18nPath.c_str());
+    Core::Notices::L18nDictionary::getSingleton()->initialize(S("ar"), l18nPathU8String.c_str());
   } else {
-    // Core::Notices::L18nDictionary::getSingleton()->initialize(S("en"), l18nPath.c_str());
+    Core::Notices::L18nDictionary::getSingleton()->initialize(S("en"), l18nPathU8String.c_str());
   }
 
   Core::Notices::setSourceLocationPathSkipping(true);

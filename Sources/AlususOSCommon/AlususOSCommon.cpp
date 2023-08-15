@@ -13,9 +13,13 @@
 
 namespace AlususOSCommon {
 
-std::string WideStringToUTF8(const wchar_t *wideStr) {
+std::string toUTF8String(const wchar_t *wideStr) {
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
   return converter.to_bytes(wideStr);
+}
+
+std::string toUTF8String(const char *str) {
+  return std::string(str);
 }
 
 bool getUTF8Argv(char *const **argv, char *const *currArgv) {
@@ -38,7 +42,7 @@ bool getUTF8Argv(char *const **argv, char *const *currArgv) {
 
     for (int i = 0; i < nArgs; i++) {
       auto arg = szArglist[i];
-      newArgvData.push_back(WideStringToUTF8(arg));
+      newArgvData.push_back(toUTF8String(arg));
       newArgv.push_back((char *)newArgvData.back().c_str());
     }
 
