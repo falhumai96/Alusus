@@ -13,7 +13,7 @@
 #include "core.h"
 #include <stdlib.h>
 #include <string.h>
-#include <AlususOSCommon.hpp>
+#include <AlususOSAL.hpp>
 
 /**
  * @defgroup main Main
@@ -49,11 +49,11 @@ Str getSystemLanguage()
 int main(int argCount, char * const oldArgs[])
 {
   // Set the codepage.
-  AlususOSCommon::UTF8CodePage utf8CodePage;
+  AlususOSAL::UTF8CodePage utf8CodePage;
 
   // Get the UTF-8 args.
   char * const * args;
-  AlususOSCommon::getUTF8Argv(&args, oldArgs);
+  AlususOSAL::getUTF8Argv(&args, oldArgs);
 
   Bool help = false;
   Bool interactive = false;

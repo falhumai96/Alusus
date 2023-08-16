@@ -146,7 +146,7 @@ if (NOT CUSTOM_OUTPUT_PATH STREQUAL "")
 endif()
 
 # Add projects
-add_subdirectory(AlususOSCommon)
+add_subdirectory(AlususOSAL)
 add_subdirectory(Srt)
 add_subdirectory(Core)
 add_subdirectory(Spp)

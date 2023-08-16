@@ -11,23 +11,37 @@
 #include <thread>
 #include <vector>
 
-#include "AlususOSCommon.hpp"
+#include "AlususOSAL.hpp"
 
-namespace AlususOSCommon {
+namespace AlususOSAL {
 
-std::string toUTF8String(const wchar_t *wideStr) {
+std::string toUTF8String(const wchar_t *wideCString) {
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  return converter.to_bytes(wideStr);
+  return converter.to_bytes(wideCString);
+}
+std::string toUTF8String(const char *narrowCString) {
+  return std::string(narrowCString);
+}
+std::string toUTF8String(const std::wstring wideString) {
+  return toUTF8String(wideString.c_str());
+}
+std::string toUTF8String(const std::string narrowString) {
+  return toUTF8String(narrowString.c_str());
 }
 
-std::string toUTF8String(const char *str) { return std::string(str); }
-
-std::wstring toWideString(const char *narrowStr) {
+std::wstring toWideString(const char *narrowCString) {
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  return converter.from_bytes(narrowStr);
+  return converter.from_bytes(narrowCString);
 }
-
-std::wstring toWideString(const wchar_t *str) { return std::wstring(str); }
+std::wstring toWideString(const wchar_t *wideCString) {
+  return std::wstring(wideCString);
+}
+std::wstring toWideString(const std::string narrowString) {
+  return toWideString(narrowString.c_str());
+}
+std::wstring toWideString(const std::wstring wideString) {
+  return toWideString(wideString.c_str());
+}
 
 bool getUTF8Argv(char *const **argv, char *const *currArgv) {
 
@@ -105,7 +119,7 @@ UTF8CodePage::~UTF8CodePage() {}
 // Returns the last Win32 error, in string format. Returns an empty string if
 // there is no error. Adapted from https://stackoverflow.com/a/17387176
 // [accessed August 8th, 2023].
-std::string GetLastErrorAsString() {
+static std::string GetLastErrorAsString() {
   // Get the error message ID, if any.
   DWORD errorMessageID = ::GetLastError();
   if (errorMessageID == 0) {
@@ -135,7 +149,7 @@ std::string GetLastErrorAsString() {
 }
 
 // To store last Windows error related to library loading, per thread.
-thread_local std::string lastDLError;
+thread_local static std::string lastDLError;
 
 #endif
 
@@ -158,7 +172,7 @@ void *dlopen(const char *__file, int __mode) noexcept(true) {
 
 char *dlerror() noexcept(true) {
 #if defined(_WIN32) || defined(WIN32)
-  return (char*) lastDLError.c_str();
+  return (char *)lastDLError.c_str();
 #else
   return dlerror();
 #endif
@@ -167,11 +181,11 @@ char *dlerror() noexcept(true) {
 void *dlsym(void *__restrict __handle,
             const char *__restrict __name) noexcept(true) {
 #if defined(_WIN32) || defined(WIN32)
-  auto address = GetProcAddress((HMODULE) __handle, __name);
+  auto address = GetProcAddress((HMODULE)__handle, __name);
   if (!address) {
     lastDLError = GetLastErrorAsString();
   }
-  return (void*) address;
+  return (void *)address;
 #else
   return dlsym(__handle, __name);
 #endif
@@ -179,7 +193,7 @@ void *dlsym(void *__restrict __handle,
 
 int dlclose(void *__handle) noexcept(true) {
 #if defined(_WIN32) || defined(WIN32)
-  auto ret = FreeLibrary((HMODULE) __handle);
+  auto ret = FreeLibrary((HMODULE)__handle);
   if (!ret) {
     lastDLError = GetLastErrorAsString();
   }
@@ -189,4 +203,46 @@ int dlclose(void *__handle) noexcept(true) {
 #endif
 }
 
-} // Namespace AlususOSCommon.
+Path::Path(const Path &other) {
+  if (this != &other) {
+    auto thisSTDPath = (std::filesystem::path *)this;
+    auto otherSTDPath = (std::filesystem::path *)&other;
+    *thisSTDPath = *otherSTDPath;
+  }
+}
+
+Path::Path(const std::filesystem::path &other) {
+  if (this != &other) {
+    auto thisSTDPath = (std::filesystem::path *)this;
+    auto otherSTDPath = (std::filesystem::path *)&other;
+    *thisSTDPath = *otherSTDPath;
+  }
+}
+
+Path &Path::operator=(const Path &other) {
+  if (this != &other) {
+    auto thisSTDPath = (std::filesystem::path *)this;
+    auto otherSTDPath = (std::filesystem::path *)&other;
+    *thisSTDPath = *otherSTDPath;
+  }
+  return *this;
+}
+
+Path &Path::operator=(const std::filesystem::path &other) {
+  if (this != &other) {
+    auto thisSTDPath = (std::filesystem::path *)this;
+    auto otherSTDPath = (std::filesystem::path *)&other;
+    *thisSTDPath = *otherSTDPath;
+  }
+  return *this;
+}
+
+std::string Path::u8string() const {
+#if defined(ALUSUS_WIN32_UNICODE)
+  return toUTF8String(std::filesystem::path::string());
+#else
+  return std::filesystem::path::string();
+#endif
+}
+
+} // Namespace AlususOSAL.

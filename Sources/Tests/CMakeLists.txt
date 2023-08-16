@@ -57,6 +57,8 @@ set_target_properties(AlususTests PROPERTIES
   COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
   CXX_STANDARD 17
   CXX_STANDARD_REQUIRED ON
+  C_STANDARD 17
+  C_STANDARD_REQUIRED ON
   POSITION_INDEPENDENT_CODE ON
   CXX_VISIBILITY_PRESET hidden
   C_VISIBILITY_PRESET hidden
@@ -70,7 +72,7 @@ if (ALUSUS_WIN32_UNICODE)
 endif()
 
 # Finally, we link Alusus libraries to our UnitTests project.
-target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon ${CMAKE_DL_LIBS})
+target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS})
 
 # Build C++ interoperability test lib.
 set(CppInteropTest_Source_Files cpp_interop_test.cpp)
@@ -79,6 +81,8 @@ set_target_properties(CppInteropTest PROPERTIES
   COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
   CXX_STANDARD 17
   CXX_STANDARD_REQUIRED ON
+  C_STANDARD 17
+  C_STANDARD_REQUIRED ON
   POSITION_INDEPENDENT_CODE ON
   CXX_VISIBILITY_PRESET hidden
   C_VISIBILITY_PRESET hidden
@@ -88,7 +92,7 @@ set_target_properties(CppInteropTest PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
-target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon)
+target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL)
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(CppInteropTest PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()

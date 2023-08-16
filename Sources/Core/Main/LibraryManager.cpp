@@ -15,7 +15,7 @@
 #else
 #include <dlfcn.h>
 #endif
-#include <AlususOSCommon.hpp>
+#include <AlususOSAL.hpp>
 #include "core.h"
 
 namespace Core::Main
@@ -102,20 +102,20 @@ PtrWord LibraryManager::load(Char const *path, Str &error)
   flags |= RTLD_DEEPBIND; // To start lookup symbols from the library itself initially.
 #endif
 #endif
-  void *handle = AlususOSCommon::dlopen(path, flags);
+  void *handle = AlususOSAL::dlopen(path, flags);
   if (!handle) {
     if (error.getLength() != 0) error += S("\n");
-    error += AlususOSCommon::dlerror();
+    error += AlususOSAL::dlerror();
     return 0;
   }
 
   // Get the library gateway if this library supports it, otherwise we'll just load the library.
   LibraryGateway *gateway = nullptr;
-  LibraryGatewayGetter fn = reinterpret_cast<LibraryGatewayGetter>(AlususOSCommon::dlsym(handle, LIBRARY_GATEWAY_GETTER_NAME));
+  LibraryGatewayGetter fn = reinterpret_cast<LibraryGatewayGetter>(AlususOSAL::dlsym(handle, LIBRARY_GATEWAY_GETTER_NAME));
   if (fn) {
     gateway = fn();
     if (!gateway) {
-      AlususOSCommon::dlclose(handle);
+      AlususOSAL::dlclose(handle);
       handle = nullptr;
       return 0;
     }

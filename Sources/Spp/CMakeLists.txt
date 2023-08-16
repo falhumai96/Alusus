@@ -64,6 +64,8 @@ set_target_properties(AlususSpp PROPERTIES
   COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
   CXX_STANDARD 17
   CXX_STANDARD_REQUIRED ON
+  C_STANDARD 17
+  C_STANDARD_REQUIRED ON
   OUTPUT_NAME alusus_spp
   DEBUG_OUTPUT_NAME alusus_spp.dbg
   VERSION ${AlususVersion}
@@ -75,7 +77,7 @@ if (ALUSUS_WIN32_UNICODE)
 endif()
 
 # Finally, we link LLVM and AlususCore libraries to our library.
-target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSCommon)
+target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSAL)
 
 # Prevent the exporting of LLVM symbols
 if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
