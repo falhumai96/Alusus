@@ -10,18 +10,18 @@
  */
 //==============================================================================
 
-#include <stdlib.h>
-// Alusus header files
-#include <core.h>
-
 // System headers
+#include <stdlib.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <regex>
 #include <filesystem>
-#include <AlususOSAL.hpp>
+
+// Alusus header files
+#include "core.h"
+#include "AlususOSAL.hpp"
 
 using Core::Notices::Notice;
 using Core::Data::Ast::List;
@@ -251,8 +251,15 @@ Bool runEndToEndTests(Str const &dirPath, Char const *ext = ".alusus")
 
 using namespace Tests;
 
-int main(int argc, char **argv)
+int main(int argc, char **oldArgv)
 {
+  // Set the codepage.
+  AlususOSAL::UTF8CodePage utf8CodePage;
+
+  // Get the UTF-8 args.
+  char * const * argv;
+  AlususOSAL::getUTF8Argv(&argv, oldArgv);
+
   Char alususReleaseYear[5];
   copyStr(ALUSUS_RELEASE_DATE, alususReleaseYear, 4);
   alususReleaseYear[4] = 0;
@@ -268,11 +275,10 @@ int main(int argc, char **argv)
   AlususOSAL::Path l18nPath = repoPath / "Notices_L18n";
   AlususOSAL::Path subpath = repoPath / "Sources" / "Tests" / argv[1];
   Char const *ext = argv[2];
-  auto l18nPathU8String = l18nPath.u8string();
   if (argc == 4 && compareStr(argv[3], S("ar")) == 0) {
-    Core::Notices::L18nDictionary::getSingleton()->initialize(S("ar"), l18nPathU8String.c_str());
+    Core::Notices::L18nDictionary::getSingleton()->initialize(S("ar"), l18nPath.u8c_str());
   } else {
-    Core::Notices::L18nDictionary::getSingleton()->initialize(S("en"), l18nPathU8String.c_str());
+    Core::Notices::L18nDictionary::getSingleton()->initialize(S("en"), l18nPath.u8c_str());
   }
 
   Core::Notices::setSourceLocationPathSkipping(true);
@@ -288,7 +294,7 @@ int main(int argc, char **argv)
   resultFilename += "AlususEndToEndTest.txt";
 
   auto ret = EXIT_SUCCESS;
-  if (!runEndToEndTests(subpath.c_str(), ext)) ret = EXIT_FAILURE;
+  if (!runEndToEndTests(subpath.u8c_str(), ext)) ret = EXIT_FAILURE;
 
   std::remove(resultFilename);
 

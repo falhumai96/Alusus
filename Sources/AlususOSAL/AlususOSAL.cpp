@@ -1,3 +1,16 @@
+/**
+ * @file AlususOSAL/AlususOSAL.cpp
+ * Contains the definitions for the UTF-8-aware OSAL (Operating System
+ * Abstraction Layer) used by Alusus.
+ *
+ * @copyright Copyright (C) 2023 Faisal Al-Humaimidi
+ *
+ * @license This file is released under Alusus Public License, Version 1.0.
+ * For details on usage and copying conditions read the full license in the
+ * accompanying license file or at <https://alusus.org/license.html>.
+ */
+//==============================================================================
+
 #if defined(_WIN32) || defined(WIN32)
 #include <Windows.h>
 #else
@@ -15,31 +28,31 @@
 
 namespace AlususOSAL {
 
-std::string toUTF8String(const wchar_t *wideCString) {
+static std::string toUTF8String(const wchar_t *wideCString) {
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
   return converter.to_bytes(wideCString);
 }
-std::string toUTF8String(const char *narrowCString) {
+static std::string toUTF8String(const char *narrowCString) {
   return std::string(narrowCString);
 }
-std::string toUTF8String(const std::wstring wideString) {
+static std::string toUTF8String(const std::wstring wideString) {
   return toUTF8String(wideString.c_str());
 }
-std::string toUTF8String(const std::string narrowString) {
+static std::string toUTF8String(const std::string narrowString) {
   return toUTF8String(narrowString.c_str());
 }
 
-std::wstring toWideString(const char *narrowCString) {
+static std::wstring toWideString(const char *narrowCString) {
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
   return converter.from_bytes(narrowCString);
 }
-std::wstring toWideString(const wchar_t *wideCString) {
+static std::wstring toWideString(const wchar_t *wideCString) {
   return std::wstring(wideCString);
 }
-std::wstring toWideString(const std::string narrowString) {
+static std::wstring toWideString(const std::string narrowString) {
   return toWideString(narrowString.c_str());
 }
-std::wstring toWideString(const std::wstring wideString) {
+static std::wstring toWideString(const std::wstring wideString) {
   return toWideString(wideString.c_str());
 }
 
@@ -86,29 +99,29 @@ bool getUTF8Argv(char *const **argv, char *const *currArgv) {
 
 #if defined(ALUSUS_WIN32_UNICODE) && (defined(_WIN32) || defined(WIN32))
 
-struct UTF8CodePageData {
+struct UTF8CodePage::UTF8CodePageData {
   unsigned int m_oldCP;
   unsigned int m_oldOutputCP;
 };
 
 UTF8CodePage::UTF8CodePage() {
-  m_data = new UTF8CodePageData;
-  ((UTF8CodePageData *)m_data)->m_oldCP = GetConsoleCP();
-  ((UTF8CodePageData *)m_data)->m_oldOutputCP = GetConsoleOutputCP();
+  m_data = std::make_unique<UTF8CodePage::UTF8CodePageData>();
+  m_data->m_oldCP = GetConsoleCP();
+  m_data->m_oldOutputCP = GetConsoleOutputCP();
   SetConsoleCP(CP_UTF8);
   SetConsoleOutputCP(CP_UTF8);
 }
 
 UTF8CodePage::~UTF8CodePage() {
-  SetConsoleCP(((UTF8CodePageData *)m_data)->m_oldCP);
-  SetConsoleOutputCP(((UTF8CodePageData *)m_data)->m_oldOutputCP);
-  delete ((UTF8CodePageData *)m_data);
-  m_data = nullptr;
+  SetConsoleCP(m_data->m_oldCP);
+  SetConsoleOutputCP(m_data->m_oldOutputCP);
 }
 
 #else
 
-UTF8CodePage::UTF8CodePage() : m_data(nullptr) {}
+struct UTF8CodePage::UTF8CodePageData {};
+
+UTF8CodePage::UTF8CodePage() {}
 
 UTF8CodePage::~UTF8CodePage() {}
 
@@ -203,45 +216,165 @@ int dlclose(void *__handle) noexcept(true) {
 #endif
 }
 
+struct Path::PathData {
+  std::filesystem::path osPath;
+#if defined(_WIN32) || defined(WIN32)
+  std::optional<std::string> pathString;
+#endif
+  std::mutex mx;
+};
+
+Path::Path() { m_data = std::make_unique<Path::PathData>(); }
+
+Path::Path(char *path) {
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = std::filesystem::path(path);
+}
+
+Path::Path(std::string &path) {
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = std::filesystem::path(path);
+}
+
 Path::Path(const Path &other) {
-  if (this != &other) {
-    auto thisSTDPath = (std::filesystem::path *)this;
-    auto otherSTDPath = (std::filesystem::path *)&other;
-    *thisSTDPath = *otherSTDPath;
-  }
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = other.m_data->osPath;
 }
 
 Path::Path(const std::filesystem::path &other) {
-  if (this != &other) {
-    auto thisSTDPath = (std::filesystem::path *)this;
-    auto otherSTDPath = (std::filesystem::path *)&other;
-    *thisSTDPath = *otherSTDPath;
-  }
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = other;
+}
+
+Path::~Path() {}
+
+Path &Path::operator=(const char *other) {
+  std::unique_lock lock(m_data->mx);
+  auto newPath = std::filesystem::path(other);
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newPath;
+  return *this;
+}
+
+Path &Path::operator=(std::string &other) {
+  std::unique_lock lock(m_data->mx);
+  auto newPath = std::filesystem::path(other);
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newPath;
+  return *this;
 }
 
 Path &Path::operator=(const Path &other) {
   if (this != &other) {
-    auto thisSTDPath = (std::filesystem::path *)this;
-    auto otherSTDPath = (std::filesystem::path *)&other;
-    *thisSTDPath = *otherSTDPath;
+    std::unique_lock lock(m_data->mx);
+    auto newPath = other.m_data->osPath;
+    m_data.reset();
+    m_data = std::make_unique<Path::PathData>();
+    m_data->osPath = newPath;
   }
   return *this;
 }
 
 Path &Path::operator=(const std::filesystem::path &other) {
-  if (this != &other) {
-    auto thisSTDPath = (std::filesystem::path *)this;
-    auto otherSTDPath = (std::filesystem::path *)&other;
-    *thisSTDPath = *otherSTDPath;
-  }
+  std::unique_lock lock(m_data->mx);
+  auto newPath = other;
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newPath;
+  return *this;
+}
+
+Path Path::operator/(const char *other) {
+  std::unique_lock lock(m_data->mx);
+  auto osPath = m_data->osPath;
+  osPath /= other;
+  return Path(osPath);
+}
+
+Path Path::operator/(std::string &other) {
+  std::unique_lock lock(m_data->mx);
+  auto osPath = m_data->osPath;
+  osPath /= other;
+  return Path(osPath);
+}
+
+Path Path::operator/(const Path &other) {
+  std::unique_lock lock(m_data->mx);
+  auto osPath = m_data->osPath;
+  osPath /= other.m_data->osPath;
+  return Path(osPath);
+}
+
+Path Path::operator/(const std::filesystem::path &other) {
+  std::unique_lock lock(m_data->mx);
+  auto osPath = m_data->osPath;
+  osPath /= other;
+  return Path(osPath);
+}
+
+Path &Path::operator/=(const char *other) {
+  std::unique_lock lock(m_data->mx);
+  auto newOSPath = m_data->osPath;
+  newOSPath /= other;
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newOSPath;
+  return *this;
+}
+
+Path &Path::operator/=(std::string &other) {
+  std::unique_lock lock(m_data->mx);
+  auto newOSPath = m_data->osPath;
+  newOSPath /= other;
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newOSPath;
+  return *this;
+}
+
+Path &Path::operator/=(const Path &other) {
+  std::unique_lock lock(m_data->mx);
+  auto newOSPath = m_data->osPath;
+  newOSPath /= other.m_data->osPath;
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newOSPath;
+  return *this;
+}
+
+Path &Path::operator/=(const std::filesystem::path &other) {
+  std::unique_lock lock(m_data->mx);
+  auto newOSPath = m_data->osPath;
+  newOSPath /= other;
+  m_data.reset();
+  m_data = std::make_unique<Path::PathData>();
+  m_data->osPath = newOSPath;
   return *this;
 }
 
 std::string Path::u8string() const {
-#if defined(ALUSUS_WIN32_UNICODE)
-  return toUTF8String(std::filesystem::path::string());
+  std::unique_lock lock(m_data->mx);
+#if defined(_WIN32) || defined(WIN32)
+  if (!m_data->pathString.has_value()) {
+    m_data->pathString = toUTF8String(m_data->osPath.wstring());
+  }
+  return m_data->pathString.value();
 #else
-  return std::filesystem::path::string();
+  return m_data->osPath.string();
+#endif
+}
+
+const char *Path::u8c_str() const {
+  std::unique_lock lock(m_data->mx);
+#if defined(_WIN32) || defined(WIN32)
+  if (!m_data->pathString.has_value()) {
+    m_data->pathString = toUTF8String(m_data->osPath.wstring());
+  }
+  return m_data->pathString.value().c_str();
+#else
+  return m_data->osPath.c_str();
 #endif
 }
 

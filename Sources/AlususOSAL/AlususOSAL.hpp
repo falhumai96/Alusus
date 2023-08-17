@@ -1,3 +1,16 @@
+/**
+ * @file AlususOSAL/AlususOSAL.hpp
+ * Contains the declarations for the UTF-8-aware OSAL (Operating System
+ * Abstraction Layer) used by Alusus.
+ *
+ * @copyright Copyright (C) 2023 Faisal Al-Humaimidi
+ *
+ * @license This file is released under Alusus Public License, Version 1.0.
+ * For details on usage and copying conditions read the full license in the
+ * accompanying license file or at <https://alusus.org/license.html>.
+ */
+//==============================================================================
+
 #ifndef ALUSUS_OSAL
 #define ALUSUS_OSAL
 
@@ -6,18 +19,6 @@
 
 // UTF-8-aware OSAL (Operating System Abstraction Layer) used by Alusus.
 namespace AlususOSAL {
-
-// Convert to UTF-8 C++ string.
-std::string toUTF8String(const wchar_t *wideCString);
-std::string toUTF8String(const char *narrowCString);
-std::string toUTF8String(const std::wstring wideString);
-std::string toUTF8String(const std::string narrowString);
-
-// Convert to wide C++ string.
-std::wstring toWideString(const char *narrowCString);
-std::wstring toWideString(const wchar_t *wideCString);
-std::wstring toWideString(const std::string narrowString);
-std::wstring toWideString(const std::wstring wideString);
 
 // Get UTF-8 argv (will return false on failure).
 bool getUTF8Argv(char *const **argv, char *const *currArgv);
@@ -29,7 +30,8 @@ public:
   ~UTF8CodePage();
 
 private:
-  void *m_data;
+  struct UTF8CodePageData;
+  std::unique_ptr<UTF8CodePageData> m_data;
 };
 
 // DL functions.
@@ -39,15 +41,33 @@ void *dlsym(void *__restrict __handle,
             const char *__restrict __name) noexcept(true);
 int dlclose(void *__handle) noexcept(true);
 
-class Path : public std::filesystem::path {
+// UTF-8 path.
+class Path {
 public:
+  Path();
+  Path(char *path);
+  Path(std::string &path);
   Path(const Path &other);
   Path(const std::filesystem::path &other);
+  ~Path();
+  Path &operator=(const char *other);
+  Path &operator=(std::string &other);
   Path &operator=(const Path &other);
   Path &operator=(const std::filesystem::path &other);
-
-  // C++17 and earlier UTF-8 path as std::string.
+  Path operator/(const char *other);
+  Path operator/(std::string &other);
+  Path operator/(const Path &other);
+  Path operator/(const std::filesystem::path &other);
+  Path &operator/=(const char *other);
+  Path &operator/=(std::string &other);
+  Path &operator/=(const Path &other);
+  Path &operator/=(const std::filesystem::path &other);
   std::string u8string() const;
+  const char *u8c_str() const;
+
+private:
+  struct PathData;
+  std::unique_ptr<PathData> m_data;
 };
 
 } // Namespace AlususOSAL.

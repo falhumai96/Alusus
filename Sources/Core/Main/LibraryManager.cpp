@@ -15,7 +15,8 @@
 #else
 #include <dlfcn.h>
 #endif
-#include <AlususOSAL.hpp>
+
+#include "AlususOSAL.hpp"
 #include "core.h"
 
 namespace Core::Main

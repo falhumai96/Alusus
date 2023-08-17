@@ -10,10 +10,11 @@
  */
 //==============================================================================
 
-#include "core.h"
 #include <stdlib.h>
 #include <string.h>
-#include <AlususOSAL.hpp>
+
+#include "core.h"
+#include "AlususOSAL.hpp"
 
 /**
  * @defgroup main Main
