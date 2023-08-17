@@ -93,6 +93,9 @@ def build_alusus(alusus_build_location: str,
             alusus_include_dirname=alusus_include_dirname),
         "-DALUSUS_USE_RPATH={alusus_use_rpath}".format(
             alusus_use_rpath=("ON" if use_rpath else "OFF")
+        ),
+        "-DPython3_EXECUTABLE={python3_exec}".format(
+            python3_exec=sys.executable
         )
     ]
     if force_cmake_generator:

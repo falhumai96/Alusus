@@ -63,16 +63,19 @@ else()
 endif()
 
 # Detect the supported compiler used.
-function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR)
+function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR RETURN_MSG_VAR)
   if(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "MSVC")
     # Visual Studio MSVC compiler.
     set(${RETURN_VALUE_VAR} "Cl" PARENT_SCOPE)
+    set(${RETURN_MSG_VAR} "MSVC Visual Studio compiler" PARENT_SCOPE)
   elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "GNU")
     # GNU GCC compiler.
     set(${RETURN_VALUE_VAR} "GCC" PARENT_SCOPE)
+    set(${RETURN_MSG_VAR} "GNU compiler" PARENT_SCOPE)
   elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "AppleClang")
     # Apple Clang compiler.
     set(${RETURN_VALUE_VAR} "AppleClang" PARENT_SCOPE)
+    set(${RETURN_MSG_VAR} "Darwin LLVM/Clang compiler" PARENT_SCOPE)
   elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "Clang")
     if(NOT DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT OR
        (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL "GNU") OR
@@ -82,15 +85,18 @@ function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR)
          (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL ""))
         # GNU Clang compiler.
         set(${RETURN_VALUE_VAR} "GNUClang" PARENT_SCOPE)
+        set(${RETURN_MSG_VAR} "LLVM/Clang compiler with GNU ABI" PARENT_SCOPE)
       elseif(DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL "MSVC")
         # MSVC Clang compiler with GNU frontend.
         set(${RETURN_VALUE_VAR} "MSVCClang" PARENT_SCOPE)
+        set(${RETURN_MSG_VAR} "LLVM/Clang compiler with MSVC ABI and GNU interface" PARENT_SCOPE)
       else()
         message(FATAL_ERROR "Unknown ${COMPILER_TO_CHECK} compiler.")
       endif()
     elseif(DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
       # MSVC Clang compiler with MSVC frontend. It will be treated like the Visual Studio MSVC compiler.
       set(${RETURN_VALUE_VAR} "Cl" PARENT_SCOPE)
+      set(${RETURN_MSG_VAR} "LLVM/Clang compiler with MSVC ABI and MSVC interface" PARENT_SCOPE)
     else()
       message(FATAL_ERROR "Unknown ${COMPILER_TO_CHECK} compiler.")
     endif()
@@ -100,8 +106,8 @@ function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR)
 endfunction()
 
 
-alusus_get_compiler_used("CXX" AlususCompilerUsed)
-message("Compiler used=${AlususCompilerUsed}")
+alusus_get_compiler_used("CXX" AlususCompilerUsed AlususCompilerUsedMsg)
+message(STATUS "Compiler used: ${AlususCompilerUsedMsg}")
 
 # Prepare compile and link flags based on the compiler selected.
 if(AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "MSVCClang" OR AlususCompilerUsed STREQUAL "AppleClang")
@@ -111,7 +117,7 @@ elseif (AlususCompilerUsed STREQUAL "GCC")
   # GCC with GNU interface options.
   set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-but-set-parameter -Wunused-but-set-variable -Wno-unused-result -fno-rtti -fvisibility=hidden")
 elseif(AlususCompilerUsed STREQUAL "Cl")
-  # MSVC Cl or Clangf with MSVC Cl interface options.
+  # MSVC Cl or Clang with MSVC Cl interface options.
   set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} /w44265 /w44130 /w44296 /wd4100 /wd4101 /wd4189 /EHsc /wd4005 /wd4146 /wd4355 /wd4800 /wd4996")  
 endif()
 
