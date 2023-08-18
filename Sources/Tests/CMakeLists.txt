@@ -72,7 +72,7 @@ if (ALUSUS_WIN32_UNICODE)
 endif()
 
 # Finally, we link Alusus libraries to our UnitTests project.
-target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS})
+target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 
 # Build C++ interoperability test lib.
 set(CppInteropTest_Source_Files cpp_interop_test.cpp)
@@ -92,7 +92,7 @@ set_target_properties(CppInteropTest PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
-target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL)
+target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(CppInteropTest PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()

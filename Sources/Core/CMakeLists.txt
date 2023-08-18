@@ -39,7 +39,7 @@ set_target_properties(AlususStorage PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
-target_link_libraries(AlususStorage PRIVATE AlususOSAL)
+target_link_libraries(AlususStorage PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususStorage PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
@@ -70,7 +70,7 @@ set_target_properties(AlususCoreLib PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCoreLib PRIVATE "core.h")
-target_link_libraries(AlususCoreLib PRIVATE AlususOSAL)
+target_link_libraries(AlususCoreLib PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususCoreLib PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
@@ -98,7 +98,7 @@ if (ALUSUS_WIN32_UNICODE)
 endif()
 
 # Finally, we link the executable to the libraries.
-target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS})
+target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 
 if (ALUSUS_USE_RPATH)
   if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

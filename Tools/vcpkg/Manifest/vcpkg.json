@@ -29,9 +29,13 @@
     {
       "name": "kubazip",
       "default-features": false
+    },
+    {
+      "name": "nowide",
+      "default-features": false
     }
   ],
-  "builtin-baseline": "f6a1d122a02877e6217e9ac6a637474a34b0f288",
+  "builtin-baseline": "c7fc2998445046e8ba3a470eeb49ee1520fbd370",
   "overrides": [
     {
       "name": "llvm",
@@ -46,6 +50,11 @@
     {
       "name": "kubazip",
       "version": "0.2.4",
+      "port-version": 0
+    },
+    {
+      "name": "nowide",
+      "version": "11.3.0",
       "port-version": 0
     }
   ]

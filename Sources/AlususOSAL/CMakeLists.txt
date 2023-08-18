@@ -7,6 +7,7 @@ target_include_directories(AlususOSAL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususOSAL PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
+target_link_libraries(AlususOSAL PRIVATE nowide::nowide)
 set_target_properties(AlususOSAL PROPERTIES
   COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
   CXX_STANDARD 17

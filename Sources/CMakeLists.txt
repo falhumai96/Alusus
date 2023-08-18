@@ -131,8 +131,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "")
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS "")
 
-# Incorporate the CMake features provided by LLVM.
-find_package(LLVM REQUIRED)
+# Find Alusus direct dependencies.
+find_package(nowide CONFIG REQUIRED)
+find_package(LLVM CONFIG REQUIRED)
 
 # Macro for generating pre-compiled headers.
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${Alusus_SOURCE_DIR}")

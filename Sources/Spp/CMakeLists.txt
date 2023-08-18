@@ -77,7 +77,7 @@ if (ALUSUS_WIN32_UNICODE)
 endif()
 
 # Finally, we link LLVM and AlususCore libraries to our library.
-target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSAL)
+target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 
 # Prevent the exporting of LLVM symbols
 if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
