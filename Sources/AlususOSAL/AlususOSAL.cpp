@@ -399,29 +399,8 @@ Path &Path::operator/=(const std::filesystem::path &other) {
   return *this;
 }
 
-std::string Path::u8string() const {
-  std::unique_lock lock(m_data->mx);
-
-#if defined(ALUSUS_WIN32)
-
-  if (!m_data->pathString.has_value()) {
-
-#if defined(ALUSUS_WIN32_UNICODE)
-
-    m_data->pathString = toUTF8String(m_data->osPath.wstring());
-
-#else
-
-    m_data->pathString = m_data->osPath.string();
-
-#endif
-  }
-  return m_data->pathString.value();
-
-#else
-
-  return m_data->osPath.string();
-#endif
+std::string Path::string() const {
+  return std::string(this->c_str());
 }
 
 const char *Path::c_str() const {
@@ -491,9 +470,11 @@ static std::string _getModuleDirectory() {
   return std::string(exePath);
 }
 
-char const *getModuleDirectory() {
+const Path &getModuleDirectory() {
   static AlususOSAL::Path path = Path(_getModuleDirectory()).parent_path();
-  return path.c_str();
+  return path;
 }
+
+Path getWorkingDirectory() { return std::filesystem::current_path(); }
 
 } // Namespace AlususOSAL.

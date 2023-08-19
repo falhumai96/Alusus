@@ -28,7 +28,7 @@ void L18nDictionary::initialize(Char const *locale, Char const *l18nPath)
   if (l18nPath) {
     l18nPathFilesystemPath = AlususOSAL::Path(l18nPath);
   } else {
-    l18nPathFilesystemPath = AlususOSAL::Path(AlususOSAL::getModuleDirectory()).parent_path().parent_path() / "Notices_L18n";
+    l18nPathFilesystemPath = AlususOSAL::getModuleDirectory().parent_path().parent_path() / "Notices_L18n";
   }
   l18nPathFilesystemPath /= (std::string(locale) + ".txt");
   std::ifstream fin(l18nPathFilesystemPath.c_str());

@@ -51,12 +51,13 @@ RootManager::RootManager() : libraryManager(this), processedFiles(true)
   this->processArgCount = 0;
   this->processArgs = 0;
 
-  this->coreBinPath = AlususOSAL::getModuleDirectory();
+  this->coreBinPath = AlususOSAL::getModuleDirectory().c_str();
 
   // Initialize current paths.
   this->pushSearchPath(this->coreBinPath);
   this->pushSearchPath((this->coreBinPath + S("../Lib/")));
-  this->pushSearchPath(getWorkingDirectory());
+  auto workingDirectory = AlususOSAL::getWorkingDirectory();
+  this->pushSearchPath(workingDirectory.c_str());
   // Add the paths from ALUSUS_LIBS environment variable, after splitting it by ':'.
   Char *alususLibs = getenv(S("ALUSUS_LIBS"));
   if (alususLibs != nullptr) {

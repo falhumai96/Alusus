@@ -63,19 +63,6 @@ typedef LibraryGateway* (*LibraryGatewayGetter)();
  */
 #define LIBRARY_GATEWAY_GETTER_DEF Core::Main::LibraryGateway* get_library_gateway()
 
-
-//==============================================================================
-// Functions
-
-/**
- * @brief Gets the currently set working directory.
- * @ingroup core_standard
- *
- * This method is used to wrap the platform-specific implementation inside a
- * platform independent function.
- */
-Srl::String getWorkingDirectory();
-
 } // namespace
 
 

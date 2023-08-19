@@ -10,7 +10,8 @@
  */
 //==============================================================================
 
-#ifdef _MSC_VER
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) &&               \
+    !defined(__CYGWIN__)
 #define DL_EXPORTED extern "C" __declspec(dllexport)
 #else
 #define DL_EXPORTED extern "C" __attribute__((__visibility__("default")))
