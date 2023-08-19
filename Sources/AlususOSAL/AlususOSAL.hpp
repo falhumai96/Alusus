@@ -72,12 +72,16 @@ public:
   Path &operator/=(const Path &other);
   Path &operator/=(const std::filesystem::path &other);
   std::string u8string() const;
-  const char *u8c_str() const;
+  const char *c_str() const;
+  Path parent_path() const;
+  // Add more std::filesystem::path method replacement as necessary.
 
 private:
   struct PathData;
   std::unique_ptr<PathData> m_data;
 };
+
+char const *getModuleDirectory();
 
 } // Namespace AlususOSAL.
 

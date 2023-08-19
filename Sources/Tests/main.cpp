@@ -270,14 +270,14 @@ int main(int argc, char **argv)
     std::cout << "Invalid arguments";
     return EXIT_FAILURE;
   }
-  AlususOSAL::Path repoPath = std::filesystem::path(__FILE__).parent_path().parent_path().parent_path();
+  AlususOSAL::Path repoPath = AlususOSAL::Path((char*) __FILE__).parent_path().parent_path().parent_path();
   AlususOSAL::Path l18nPath = repoPath / "Notices_L18n";
   AlususOSAL::Path subpath = repoPath / "Sources" / "Tests" / argv[1];
   Char const *ext = argv[2];
   if (argc == 4 && compareStr(argv[3], S("ar")) == 0) {
-    Core::Notices::L18nDictionary::getSingleton()->initialize(S("ar"), l18nPath.u8c_str());
+    Core::Notices::L18nDictionary::getSingleton()->initialize(S("ar"), l18nPath.c_str());
   } else {
-    Core::Notices::L18nDictionary::getSingleton()->initialize(S("en"), l18nPath.u8c_str());
+    Core::Notices::L18nDictionary::getSingleton()->initialize(S("en"), l18nPath.c_str());
   }
 
   Core::Notices::setSourceLocationPathSkipping(true);
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
   resultFilename += "AlususEndToEndTest.txt";
 
   auto ret = EXIT_SUCCESS;
-  if (!runEndToEndTests(subpath.u8c_str(), ext)) ret = EXIT_FAILURE;
+  if (!runEndToEndTests(subpath.c_str(), ext)) ret = EXIT_FAILURE;
 
   std::remove(resultFilename);
 

@@ -13,40 +13,43 @@
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) &&               \
     !defined(__CYGWIN__)
-
 #define ALUSUS_WIN32
-
+#elif defined(__APPLE__)
+#define ALUSUS_APPLE
+#elif defined(__linux__)
+#define ALUSUS_LINUX
+#else
+#error "Unsupported platform for AlususOSAL."
 #endif
 
 // Unicode supported == Either Windows with Unicode support or no Windows
 #if (defined(ALUSUS_WIN32) && defined(ALUSUS_WIN32_UNICODE)) ||                \
     !defined(ALUSUS_WIN32)
-
 #define ALUSUS_UNICODE_SUPPORTED
-
 #endif
 
 #if defined(ALUSUS_WIN32)
-
+// Windows includes.
 #include <Windows.h>
-
 #else
-
-#include <dlfcn.h>
-
+// Unix includes.
+#if defined(ALUSUS_LINUX)
+// Linux includes.
+#include <limits.h>
+#include <unistd.h>
+#elif defined(ALUSUS_APPLE)
+// Apple includes.
+#include <mach-o/dyld.h>
 #endif
-
+#include <dlfcn.h>
+#endif
 #include <codecvt>
 #include <locale>
 #include <memory>
 #include <mutex>
-
 #if defined(ALUSUS_UNICODE_SUPPORTED)
-
 #include <nowide/args.hpp>
-
 #endif
-
 #include <string>
 #include <thread>
 #include <vector>
@@ -421,7 +424,7 @@ std::string Path::u8string() const {
 #endif
 }
 
-const char *Path::u8c_str() const {
+const char *Path::c_str() const {
   std::unique_lock lock(m_data->mx);
 
 #if defined(ALUSUS_WIN32)
@@ -442,6 +445,55 @@ const char *Path::u8c_str() const {
 #else
   return m_data->osPath.c_str();
 #endif
+}
+
+Path Path::parent_path() const {
+  std::unique_lock lock(m_data->mx);
+  auto parentPath = m_data->osPath.parent_path();
+  return Path(parentPath);
+}
+
+static std::string _getModuleDirectory() {
+#if defined(ALUSUS_WIN32)
+  std::string emptyExePath;
+  char *exePath;
+#if defined(ALUSUS_WIN32_UNICODE)
+  wchar_t *wExePath;
+  std::string exePathString;
+  if (_get_wpgmptr(&wExePath) == 0) {
+    exePathString = toUTF8String(wExePath);
+    exePath = (char *)exePathString.c_str();
+  } else
+#else
+  if (_get_pgmptr(&exePath) != 0)
+#endif
+    exePath = (char *)emptyExePath.c_str();
+#elif defined(ALUSUS_LINUX)
+  char exePath[PATH_MAX];
+  ssize_t len = ::readlink("/proc/self/exe", exePath, sizeof(exePath));
+  if (len == -1 || len == sizeof(exePath))
+    len = 0;
+  exePath[len] = '\0';
+#elif defined(ALUSUS_APPLE)
+  char exePath[PATH_MAX];
+  uint32_t len = sizeof(exePath);
+  if (_NSGetExecutablePath(exePath, &len) != 0) {
+    exePath[0] = '\0'; // buffer too small (!)
+  } else {
+    // resolve symlinks, ., .. if possible
+    char *canonicalPath = realpath(exePath, NULL);
+    if (canonicalPath != NULL) {
+      strncpy(exePath, canonicalPath, len);
+      free(canonicalPath);
+    }
+  }
+#endif
+  return std::string(exePath);
+}
+
+char const *getModuleDirectory() {
+  static AlususOSAL::Path path = Path(_getModuleDirectory()).parent_path();
+  return path.c_str();
 }
 
 } // Namespace AlususOSAL.

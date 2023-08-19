@@ -52,27 +52,4 @@ Srl::String getWorkingDirectory()
   return path;
 }
 
-
-Srl::String getModuleDirectory()
-{
-  thread_local static std::array<Char,FILENAME_MAX> currentPath;
-
-  #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-    std::string path(currentPath.data(), GetModuleFileNameA(NULL, currentPath.data(), currentPath.size()));
-  #elif __APPLE__
-    uint32_t size = FILENAME_MAX;
-    // TODO: Check the result.
-    auto res = _NSGetExecutablePath(currentPath.data(), &size);
-    thread_local static std::array<Char,FILENAME_MAX> realCurrentPath;
-    realpath(currentPath.data(), realCurrentPath.data());
-    std::string path(realCurrentPath.data());
-  #else
-    ssize_t count = readlink("/proc/self/exe", currentPath.data(), currentPath.size());
-    std::string path(currentPath.data(), (count > 0) ? count : 0);
-  #endif
-
-  Int pos = path.rfind(C('/'));
-  return Srl::String(path.c_str(), pos+1);
-}
-
 } // namespace

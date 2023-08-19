@@ -13,6 +13,7 @@
 #include "core.h"
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <AlususOSAL.hpp>
 
 namespace Core::Main
 {
@@ -50,7 +51,7 @@ RootManager::RootManager() : libraryManager(this), processedFiles(true)
   this->processArgCount = 0;
   this->processArgs = 0;
 
-  this->coreBinPath = getModuleDirectory();
+  this->coreBinPath = AlususOSAL::getModuleDirectory();
 
   // Initialize current paths.
   this->pushSearchPath(this->coreBinPath);

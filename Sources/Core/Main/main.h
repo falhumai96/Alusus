@@ -76,17 +76,6 @@ typedef LibraryGateway* (*LibraryGatewayGetter)();
  */
 Srl::String getWorkingDirectory();
 
-/**
- * @brief Gets the directory of the executable.
- * @ingroup core_standard
- *
- * This can be different from the working directory if the user launches the
- * executable from a path other than the exe's path.
- * This method is used to wrap the platform-specific implementation inside a
- * platform independent function.
- */
-Srl::String getModuleDirectory();
-
 } // namespace
 
 
