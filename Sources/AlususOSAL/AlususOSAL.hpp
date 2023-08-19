@@ -20,10 +20,7 @@
 // UTF-8-aware OSAL (Operating System Abstraction Layer) used by Alusus.
 namespace AlususOSAL {
 
-// Get UTF-8 argv (will return false on failure).
-bool getUTF8Argv(char *const **argv, char *const *currArgv);
-
-// Initialize the UTF-8 code page. Must be called in "main".
+// Initialize the UTF-8 code page. Must be instantiated early in "main".
 class UTF8CodePage {
 public:
   UTF8CodePage();
@@ -34,14 +31,26 @@ private:
   std::unique_ptr<UTF8CodePageData> m_data;
 };
 
-// DL functions.
+// Convert "main" arguments to use UTF-8. Must be instantiated early in "main".
+class Args {
+public:
+  Args(int &argc, char **&argv);
+  Args(int &argc, char **&argv, char **&en);
+  ~Args();
+
+private:
+  class ArgsData;
+  std::unique_ptr<ArgsData> m_data;
+};
+
+// DL functions drop-in replacement.
 void *dlopen(const char *__file, int __mode) noexcept(true);
 char *dlerror() noexcept(true);
 void *dlsym(void *__restrict __handle,
             const char *__restrict __name) noexcept(true);
 int dlclose(void *__handle) noexcept(true);
 
-// UTF-8 path.
+// std::filesystem::path drop-in replacement.
 class Path {
 public:
   Path();

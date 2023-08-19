@@ -29,7 +29,8 @@ def build_alusus(alusus_build_location: str,
                  skip_installing_std_deps: bool,
                  verbose_output: bool = False,
                  force_cmake_generator: str = None,
-                 use_rpath: bool = True):
+                 use_rpath: bool = True,
+                 use_unicode_win32: bool = True):
 
     os.makedirs(alusus_build_location, exist_ok=True)
     os.makedirs(alusus_install_location, exist_ok=True)
@@ -93,6 +94,9 @@ def build_alusus(alusus_build_location: str,
             alusus_include_dirname=alusus_include_dirname),
         "-DALUSUS_USE_RPATH={alusus_use_rpath}".format(
             alusus_use_rpath=("ON" if use_rpath else "OFF")
+        ),
+        "-DALUSUS_WIN32_UNICODE={alusus_use_unicode_win32}".format(
+            alusus_use_unicode_win32=("ON" if use_unicode_win32 else "OFF")
         ),
         "-DPython3_EXECUTABLE={python3_exec}".format(
             python3_exec=sys.executable
@@ -276,6 +280,8 @@ def parse_cmd_args(args):
                         type=str, help="Use specific CMake generator")
     parser.add_argument("--skip-rpath", action="store_true",
                         help="Don't use RPATH on supported systems")
+    parser.add_argument("--no-unicode-win32", action="store_true",
+                        help="Don't use Unicode on Windows")
     parser.add_argument("--skip-installing-std-deps",
                         help="Whether or not to skip installing the standard libraries dependencies", action="store_true")
     parser.add_argument("--print-supported-build-types", action="store_true",
@@ -351,7 +357,8 @@ if __name__ == "__main__":
                        args.skip_installing_std_deps,
                        verbose_output=args.verbose,
                        force_cmake_generator=args.force_cmake_generator,
-                       use_rpath=(not args.skip_rpath))
+                       use_rpath=(not args.skip_rpath),
+                       use_unicode_win32=(not args.no_unicode_win32))
     if not ret:
         exit(1)
 

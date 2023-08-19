@@ -251,14 +251,13 @@ Bool runEndToEndTests(Str const &dirPath, Char const *ext = ".alusus")
 
 using namespace Tests;
 
-int main(int argc, char **oldArgv)
+int main(int argc, char **argv)
 {
   // Set the codepage.
-  AlususOSAL::UTF8CodePage utf8CodePage;
+  AlususOSAL::UTF8CodePage utf8CodePageSetter;
 
   // Get the UTF-8 args.
-  char * const * argv;
-  AlususOSAL::getUTF8Argv(&argv, oldArgv);
+  AlususOSAL::Args argsConverter(argc, argv);
 
   Char alususReleaseYear[5];
   copyStr(ALUSUS_RELEASE_DATE, alususReleaseYear, 4);

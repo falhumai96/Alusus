@@ -10,7 +10,7 @@
  */
 //==============================================================================
 
-#if defined(_WIN32) || defined(WIN32)
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
 #include <Windows.h>
 #else
 #include <dlfcn.h>
@@ -94,7 +94,7 @@ LibraryGateway* LibraryManager::getGateway(Char const *libId)
 
 PtrWord LibraryManager::load(Char const *path, Str &error)
 {
-#if defined(_WIN32) || defined(WIN32)
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
   // We can specify Windows flags if we start using LoadLibraryEx. For now, flags are ignored.
   auto flags = 0;
 #else

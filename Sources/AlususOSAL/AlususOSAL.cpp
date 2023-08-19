@@ -11,15 +11,42 @@
  */
 //==============================================================================
 
-#if defined(_WIN32) || defined(WIN32)
-#include <Windows.h>
-#else
-#include <dlfcn.h>
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) &&               \
+    !defined(__CYGWIN__)
+
+#define ALUSUS_WIN32
+
 #endif
+
+// Unicode supported == Either Windows with Unicode support or no Windows
+#if (defined(ALUSUS_WIN32) && defined(ALUSUS_WIN32_UNICODE)) ||                \
+    !defined(ALUSUS_WIN32)
+
+#define ALUSUS_UNICODE_SUPPORTED
+
+#endif
+
+#if defined(ALUSUS_WIN32)
+
+#include <Windows.h>
+
+#else
+
+#include <dlfcn.h>
+
+#endif
+
 #include <codecvt>
 #include <locale>
 #include <memory>
 #include <mutex>
+
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+
+#include <nowide/args.hpp>
+
+#endif
+
 #include <string>
 #include <thread>
 #include <vector>
@@ -56,48 +83,34 @@ static std::wstring toWideString(const std::wstring wideString) {
   return toWideString(wideString.c_str());
 }
 
-bool getUTF8Argv(char *const **argv, char *const *currArgv) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
 
-#if defined(ALUSUS_WIN32_UNICODE) && (defined(_WIN32) || defined(WIN32))
-
-  static std::vector<char *> newArgv;
-  static std::vector<std::string> newArgvData;
-  static bool ret = false;
-  std::once_flag flag;
-
-  std::call_once(flag, []() {
-    int nArgs;
-    std::unique_ptr<LPWSTR[], decltype(&LocalFree)> argsMemory(
-        CommandLineToArgvW(GetCommandLineW(), &nArgs), LocalFree);
-    auto szArglist = argsMemory.get();
-    if (!szArglist) {
-      return;
-    }
-
-    for (int i = 0; i < nArgs; i++) {
-      auto arg = szArglist[i];
-      newArgvData.push_back(toUTF8String(arg));
-      newArgv.push_back((char *)newArgvData.back().c_str());
-    }
-
-    ret = true;
-  });
-
-  if (ret) {
-    *argv = newArgv.data();
-  }
-
-  return ret;
+class Args::ArgsData : public nowide::args {
+public:
+  using nowide::args::args;
+};
 
 #else
 
-  *argv = currArgv;
-  return true;
+class Args::ArgsData {};
 
+#endif
+
+Args::Args(int &argc, char **&argv) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  m_data = std::make_unique<Args::ArgsData>(argc, argv);
 #endif
 }
 
-#if defined(ALUSUS_WIN32_UNICODE) && (defined(_WIN32) || defined(WIN32))
+Args::Args(int &argc, char **&argv, char **&en) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  m_data = std::make_unique<Args::ArgsData>(argc, argv, en);
+#endif
+}
+
+Args::~Args() {}
+
+#if defined(ALUSUS_WIN32_UNICODE)
 
 struct UTF8CodePage::UTF8CodePageData {
   unsigned int m_oldCP;
@@ -127,7 +140,7 @@ UTF8CodePage::~UTF8CodePage() {}
 
 #endif
 
-#if defined(_WIN32) || defined(WIN32)
+#if defined(ALUSUS_WIN32)
 
 // Returns the last Win32 error, in string format. Returns an empty string if
 // there is no error. Adapted from https://stackoverflow.com/a/17387176
@@ -167,60 +180,89 @@ thread_local static std::string lastDLError;
 #endif
 
 void *dlopen(const char *__file, int __mode) noexcept(true) {
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
 #if defined(ALUSUS_WIN32_UNICODE)
+
   auto wideStringPath = toWideString(__file);
   HMODULE handle = LoadLibraryW(wideStringPath.c_str());
+
 #else
-  HMODULE handle = LoadLibraryA(path);
+
+  HMODULE handle = LoadLibraryA(__file);
+
 #endif
+
   if (!handle) {
     lastDLError = GetLastErrorAsString();
   }
   return handle;
+
 #else
+
   return dlopen(__file, __mode);
+
 #endif
 }
 
 char *dlerror() noexcept(true) {
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
   return (char *)lastDLError.c_str();
+
 #else
+
   return dlerror();
+
 #endif
 }
 
 void *dlsym(void *__restrict __handle,
             const char *__restrict __name) noexcept(true) {
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
   auto address = GetProcAddress((HMODULE)__handle, __name);
   if (!address) {
     lastDLError = GetLastErrorAsString();
   }
   return (void *)address;
+
 #else
+
   return dlsym(__handle, __name);
+
 #endif
 }
 
 int dlclose(void *__handle) noexcept(true) {
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
   auto ret = FreeLibrary((HMODULE)__handle);
   if (!ret) {
     lastDLError = GetLastErrorAsString();
   }
   return !ret;
+
 #else
+
   return dlclose(__handle);
+
 #endif
 }
 
 struct Path::PathData {
   std::filesystem::path osPath;
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
   std::optional<std::string> pathString;
+
 #endif
+
   std::mutex mx;
 };
 
@@ -356,21 +398,45 @@ Path &Path::operator/=(const std::filesystem::path &other) {
 
 std::string Path::u8string() const {
   std::unique_lock lock(m_data->mx);
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
   if (!m_data->pathString.has_value()) {
+
+#if defined(ALUSUS_WIN32_UNICODE)
+
     m_data->pathString = toUTF8String(m_data->osPath.wstring());
+
+#else
+
+    m_data->pathString = m_data->osPath.string();
+
+#endif
   }
   return m_data->pathString.value();
+
 #else
+
   return m_data->osPath.string();
 #endif
 }
 
 const char *Path::u8c_str() const {
   std::unique_lock lock(m_data->mx);
-#if defined(_WIN32) || defined(WIN32)
+
+#if defined(ALUSUS_WIN32)
+
   if (!m_data->pathString.has_value()) {
+
+#if defined(ALUSUS_WIN32_UNICODE)
+
     m_data->pathString = toUTF8String(m_data->osPath.wstring());
+
+#else
+
+    m_data->pathString = m_data->osPath.string();
+
+#endif
   }
   return m_data->pathString.value().c_str();
 #else

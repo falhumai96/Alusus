@@ -15,7 +15,7 @@
 #if __APPLE__
   #include <mach-o/dyld.h>
 #endif
-#if defined(_WIN32) || defined(WIN32)
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
   #include <direct.h>
   #include <windows.h>
 #else
@@ -28,7 +28,7 @@ namespace Core::Main
 
 using namespace Data;
 
-#if defined(_WIN32) || defined(WIN32)
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
   #define _getWorkingDirectory _getcwd
 #else
   #define _getWorkingDirectory getcwd
@@ -57,7 +57,7 @@ Srl::String getModuleDirectory()
 {
   thread_local static std::array<Char,FILENAME_MAX> currentPath;
 
-  #if defined(_WIN32) || defined(WIN32)
+  #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
     std::string path(currentPath.data(), GetModuleFileNameA(NULL, currentPath.data(), currentPath.size()));
   #elif __APPLE__
     uint32_t size = FILENAME_MAX;

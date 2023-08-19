@@ -47,14 +47,13 @@ Str getSystemLanguage()
  *
  * Parse the file with the name passed from the command line.
  */
-int main(int argCount, char * const oldArgs[])
+int main(int argCount, char **args)
 {
   // Set the codepage.
-  AlususOSAL::UTF8CodePage utf8CodePage;
+  AlususOSAL::UTF8CodePage utf8CodePageSetter;
 
   // Get the UTF-8 args.
-  char * const * args;
-  AlususOSAL::getUTF8Argv(&args, oldArgs);
+  AlususOSAL::Args argsConverter(argCount, args);
 
   Bool help = false;
   Bool interactive = false;
