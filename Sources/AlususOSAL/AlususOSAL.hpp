@@ -85,6 +85,8 @@ const Path &getModuleDirectory();
 
 Path getWorkingDirectory();
 
+const std::vector<char*>& getAlususPackageLibDirNames();
+
 } // Namespace AlususOSAL.
 
 #endif

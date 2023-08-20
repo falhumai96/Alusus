@@ -31,8 +31,10 @@ if (NOT DEFINED Python3_EXECUTABLE)
     "Python 3 executable")
 endif ()
 execute_process(COMMAND ${Python3_EXECUTABLE} version_info.py
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc"
                 OUTPUT_VARIABLE VersionInfo)
+execute_process(COMMAND ${Python3_EXECUTABLE} generate_defs_header.py "${CMAKE_BINARY_DIR}/AlususDefs" "--bin-dir-name" "${ALUSUS_BIN_DIR_NAME}" "--lib-dir-name" "${ALUSUS_LIB_DIR_NAME}" "--include-dir-name" "${ALUSUS_INCLUDE_DIR_NAME}"
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc")
 string(REGEX MATCH "VERSION: ([0-9]+\\.[0-9]+\\.[0-9]+)" _dummy_ ${VersionInfo})
 set(AlususVersion ${CMAKE_MATCH_1})
 string(REGEX MATCH "^[0-9]+\\.[0-9]+" AlususShlibVersion ${AlususVersion})

@@ -72,6 +72,7 @@ set_target_properties(AlususSpp PROPERTIES
   SHLIBVERSION ${AlususShlibVersion}
 )
 target_precompile_headers(AlususSpp PRIVATE "spp.h")
+target_include_directories(AlususSpp PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususSpp PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()

@@ -11,6 +11,8 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
+
 #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) &&               \
     !defined(__CYGWIN__)
 #define ALUSUS_WIN32
@@ -476,5 +478,16 @@ const Path &getModuleDirectory() {
 }
 
 Path getWorkingDirectory() { return std::filesystem::current_path(); }
+
+const std::vector<char*>& getAlususPackageLibDirNames() {
+  static std::vector<char*> libDirNames = {
+    (char*) ALUSUS_LIB_DIR_NAME
+#if defined(ALUSUS_WIN32)
+    ,
+    (char*) ALUSUS_BIN_DIR_NAME
+#endif
+  };
+  return libDirNames;
+}
 
 } // Namespace AlususOSAL.

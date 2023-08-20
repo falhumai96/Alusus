@@ -40,6 +40,7 @@ set_target_properties(AlususStorage PROPERTIES
   SHLIBVERSION ${AlususShlibVersion}
 )
 target_link_libraries(AlususStorage PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
+target_include_directories(AlususStorage PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususStorage PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
@@ -71,6 +72,7 @@ set_target_properties(AlususCoreLib PROPERTIES
 )
 target_precompile_headers(AlususCoreLib PRIVATE "core.h")
 target_link_libraries(AlususCoreLib PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
+target_include_directories(AlususCoreLib PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususCoreLib PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
@@ -93,6 +95,7 @@ set_target_properties(AlususCore PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCore PRIVATE "core.h")
+target_include_directories(AlususCore PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususCore PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()

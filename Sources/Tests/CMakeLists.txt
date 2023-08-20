@@ -67,6 +67,7 @@ set_target_properties(AlususTests PROPERTIES
   DEBUG_OUTPUT_NAME alusus_tests.dbg
   VERSION ${AlususVersion}
 )
+target_include_directories(AlususTests PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(AlususTests PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
@@ -93,6 +94,7 @@ set_target_properties(CppInteropTest PROPERTIES
   SHLIBVERSION ${AlususShlibVersion}
 )
 target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
+target_include_directories(CppInteropTest PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
   target_compile_definitions(CppInteropTest PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
 endif()
