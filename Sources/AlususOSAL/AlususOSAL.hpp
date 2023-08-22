@@ -81,11 +81,18 @@ private:
   std::unique_ptr<PathData> m_data;
 };
 
+// Get the directory where the module is.
 const Path &getModuleDirectory();
 
+// Get the current working directory.
 Path getWorkingDirectory();
 
-const std::vector<char*>& getAlususPackageLibDirNames();
+// Get the directory names to be added to the Alusus search path from within the
+// installed package directory. These are defined at compile time and different
+// between OSes (e.g., binary and library directories to be added for Windows
+// (shared libraries are stored in the binary directory), while library
+// directory to be added only for Unix).
+const std::vector<char *> &getAlususPackageLibDirNames();
 
 } // Namespace AlususOSAL.
 
