@@ -60,33 +60,34 @@
 
 namespace AlususOSAL {
 
+// String conversion local functions for Windows with Unicode support.
+#if defined(ALUSUS_WIN32_UNICODE)
 static std::string toUTF8String(const wchar_t *wideCString) {
-  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  return converter.to_bytes(wideCString);
+  return nowide::narrow(wideCString, nowide::utf::strlen(wideCString));
 }
 static std::string toUTF8String(const char *narrowCString) {
   return std::string(narrowCString);
 }
-static std::string toUTF8String(const std::wstring wideString) {
-  return toUTF8String(wideString.c_str());
+static std::string toUTF8String(const std::wstring &wideString) {
+  return nowide::narrow(wideString.c_str(), wideString.size());
 }
-static std::string toUTF8String(const std::string narrowString) {
-  return toUTF8String(narrowString.c_str());
+static std::string toUTF8String(const std::string &narrowString) {
+  return narrowString;
 }
 
 static std::wstring toWideString(const char *narrowCString) {
-  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  return converter.from_bytes(narrowCString);
+  return nowide::widen(narrowCString, nowide::utf::strlen(narrowCString));
 }
 static std::wstring toWideString(const wchar_t *wideCString) {
   return std::wstring(wideCString);
 }
-static std::wstring toWideString(const std::string narrowString) {
-  return toWideString(narrowString.c_str());
+static std::wstring toWideString(const std::string &narrowString) {
+  return nowide::widen(narrowString.c_str(), narrowString.size());
 }
-static std::wstring toWideString(const std::wstring wideString) {
-  return toWideString(wideString.c_str());
+static std::wstring toWideString(const std::wstring &wideString) {
+  return wideString;
 }
+#endif
 
 #if defined(ALUSUS_UNICODE_SUPPORTED)
 
@@ -401,9 +402,7 @@ Path &Path::operator/=(const std::filesystem::path &other) {
   return *this;
 }
 
-std::string Path::string() const {
-  return std::string(this->c_str());
-}
+std::string Path::string() const { return std::string(this->c_str()); }
 
 const char *Path::c_str() const {
   std::unique_lock lock(m_data->mx);
@@ -479,12 +478,12 @@ const Path &getModuleDirectory() {
 
 Path getWorkingDirectory() { return std::filesystem::current_path(); }
 
-const std::vector<char*>& getAlususPackageLibDirNames() {
-  static std::vector<char*> libDirNames = {
-    (char*) ALUSUS_LIB_DIR_NAME
+const std::vector<char *> &getAlususPackageLibDirNames() {
+  static std::vector<char *> libDirNames = {
+    (char *)ALUSUS_LIB_DIR_NAME
 #if defined(ALUSUS_WIN32)
     ,
-    (char*) ALUSUS_BIN_DIR_NAME
+    (char *)ALUSUS_BIN_DIR_NAME
 #endif
   };
   return libDirNames;
