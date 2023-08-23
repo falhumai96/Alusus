@@ -31,7 +31,9 @@ void L18nDictionary::initialize(Char const *locale, Char const *l18nPath)
     l18nPathFilesystemPath = AlususOSAL::getModuleDirectory().parent_path().parent_path() / "Notices_L18n";
   }
   l18nPathFilesystemPath /= (std::string(locale) + ".txt");
-  std::ifstream fin(l18nPathFilesystemPath.c_str());
+  auto autoFinHandle =
+      AlususOSAL::ifstreamOpenFile(l18nPathFilesystemPath.c_str());
+  auto &fin = *autoFinHandle.get();
   if (!fin.fail()) {
     while (!fin.eof()) {
       std::string line;

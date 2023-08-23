@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "AlususOSAL.hpp"
 #include "core.h"
 
 namespace Core { namespace Processing
@@ -62,7 +63,8 @@ SharedPtr<TiObject> Engine::processString(Char const *str, Char const *name)
 SharedPtr<TiObject> Engine::processFile(Char const *filename)
 {
   // Open the file.
-  std::ifstream fin(filename);
+  auto autoFinHandle = AlususOSAL::ifstreamOpenFile(filename);
+  auto &fin = *autoFinHandle.get();
   StdCharInStream finStream(&fin);
 
   if (fin.fail()) {

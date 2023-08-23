@@ -131,11 +131,14 @@ Bool runSourceFile(Str const &fileName)
  */
 Bool checkRunResult(Str const &fileName)
 {
-  std::ifstream runResult(resultFilename);
+  auto autoRunResultHandle = AlususOSAL::ifstreamOpenFile(resultFilename);
+  auto &runResult = *autoRunResultHandle.get();
   std::string runResultContent((std::istreambuf_iterator<char>(runResult)),
       std::istreambuf_iterator<char>());
 
-  std::ifstream expectedResult(fileName + ".output");
+  auto autoExpectedResultHandle =
+      AlususOSAL::ifstreamOpenFile(fileName + ".output");
+  auto &expectedResult = *autoExpectedResultHandle.get();
   std::string expectedResultContent((std::istreambuf_iterator<char>(expectedResult)),
       std::istreambuf_iterator<char>());
 
@@ -173,11 +176,14 @@ Bool checkRunResult(Str const &fileName)
  */
 void updateTestSnapshot(Str const &fileName)
 {
-  std::ifstream runResult(resultFilename);
+  auto autoRunResultHandle = AlususOSAL::ifstreamOpenFile(resultFilename);
+  auto &runResult = *autoRunResultHandle.get();
   std::string runResultContent((std::istreambuf_iterator<char>(runResult)),
       std::istreambuf_iterator<char>());
 
-  std::ofstream expectedResult(fileName + ".output");
+  auto autoExpectedResultHandle =
+      AlususOSAL::ofstreamOpenFile(fileName + ".output");
+  auto &expectedResult = *autoExpectedResultHandle.get();
   expectedResult << runResultContent;
 
   std::cout << "Done. " << std::endl;

@@ -51,6 +51,9 @@
 #include <mutex>
 #if defined(ALUSUS_UNICODE_SUPPORTED)
 #include <nowide/args.hpp>
+#include <nowide/fstream.hpp>
+#else
+#include <fstream>
 #endif
 #include <string>
 #include <thread>
@@ -487,6 +490,38 @@ const std::vector<char *> &getAlususPackageLibDirNames() {
 #endif
   };
   return libDirNames;
+}
+
+std::unique_ptr<std::basic_istream<char>>
+ifstreamOpenFile(char const *filename) {
+  auto fileHandle =
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+      std::make_unique<nowide::ifstream>(filename);
+#else
+      std::make_unique<std::ifstream>(filename);
+#endif
+  return fileHandle;
+}
+
+std::unique_ptr<std::basic_istream<char>>
+ifstreamOpenFile(std::string const &filename) {
+  return ifstreamOpenFile(filename.c_str());
+}
+
+std::unique_ptr<std::basic_ostream<char>>
+ofstreamOpenFile(char const *filename) {
+  auto fileHandle =
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+      std::make_unique<nowide::ofstream>(filename);
+#else
+      std::make_unique<std::ofstream>(filename);
+#endif
+  return fileHandle;
+}
+
+std::unique_ptr<std::basic_ostream<char>>
+ofstreamOpenFile(std::string const &filename) {
+  return ofstreamOpenFile(filename.c_str());
 }
 
 } // Namespace AlususOSAL.

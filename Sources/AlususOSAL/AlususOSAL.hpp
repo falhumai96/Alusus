@@ -15,7 +15,9 @@
 #define ALUSUS_OSAL
 
 #include <filesystem>
+#include <memory>
 #include <string>
+#include <vector>
 
 // UTF-8-aware OSAL (Operating System Abstraction Layer) used by Alusus.
 namespace AlususOSAL {
@@ -93,6 +95,16 @@ Path getWorkingDirectory();
 // (shared libraries are stored in the binary directory), while library
 // directory to be added only for Unix).
 const std::vector<char *> &getAlususPackageLibDirNames();
+
+// File stream.
+std::unique_ptr<std::basic_istream<char>>
+ifstreamOpenFile(char const *filename);
+std::unique_ptr<std::basic_istream<char>>
+ifstreamOpenFile(std::string const &filename);
+std::unique_ptr<std::basic_ostream<char>>
+ofstreamOpenFile(char const *filename);
+std::unique_ptr<std::basic_ostream<char>>
+ofstreamOpenFile(std::string const &filename);
 
 } // Namespace AlususOSAL.
 
