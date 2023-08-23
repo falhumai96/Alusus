@@ -52,8 +52,10 @@
 #if defined(ALUSUS_UNICODE_SUPPORTED)
 #include <nowide/args.hpp>
 #include <nowide/fstream.hpp>
+#include <nowide/iostream.hpp>
 #else
 #include <fstream>
+#include <iostream>
 #endif
 #include <string>
 #include <thread>
@@ -522,6 +524,30 @@ ofstreamOpenFile(char const *filename) {
 std::unique_ptr<std::basic_ostream<char>>
 ofstreamOpenFile(std::string const &filename) {
   return ofstreamOpenFile(filename.c_str());
+}
+
+std::basic_istream<char> &getCin() {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::cin;
+#else
+  return std::cin;
+#endif
+}
+
+std::basic_ostream<char> &getCout() {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::cout;
+#else
+  return std::cout;
+#endif
+}
+
+std::basic_ostream<char> &getCerr() {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::cerr;
+#else
+  return std::cerr;
+#endif
 }
 
 } // Namespace AlususOSAL.

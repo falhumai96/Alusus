@@ -106,6 +106,11 @@ ofstreamOpenFile(char const *filename);
 std::unique_ptr<std::basic_ostream<char>>
 ofstreamOpenFile(std::string const &filename);
 
+// STDIN/STDOUT/STDERR.
+std::basic_istream<char> &getCin();
+std::basic_ostream<char> &getCout();
+std::basic_ostream<char> &getCerr();
+
 } // Namespace AlususOSAL.
 
 #endif

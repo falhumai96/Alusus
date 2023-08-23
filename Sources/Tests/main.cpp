@@ -100,9 +100,10 @@ Bool runSourceFile(Str const &fileName)
     clearerr(stdout);
     fsetpos(stdout, &pos);
 
-    std::cout << "Failed to run source file " << fileName << "." << std::endl;
-    std::cout << "The following error were thrown: " << std::endl;
-    std::cout << e.getVerboseErrorMessage() << std::endl;
+    AlususOSAL::getCout() << "Failed to run source file " << fileName << "."
+                          << std::endl;
+    AlususOSAL::getCout() << "The following error were thrown: " << std::endl;
+    AlususOSAL::getCout() << e.getVerboseErrorMessage() << std::endl;
     return false;
   }
   catch (...)
@@ -114,7 +115,8 @@ Bool runSourceFile(Str const &fileName)
     clearerr(stdout);
     fsetpos(stdout, &pos);
 
-    std::cout << "Failed to run source file " << fileName << "." << std::endl;
+    AlususOSAL::getCout() << "Failed to run source file " << fileName << "."
+                          << std::endl;
     throw;
   }
 }
@@ -156,14 +158,18 @@ Bool checkRunResult(Str const &fileName)
   // reason, editors seem to append 0A at the end of the file!
   auto ret =  massagedRunResultContent.compare(massagedExpectedResultContent) == 0;
   if (ret == true)
-    std::cout << "Successful." << std::endl;
+    AlususOSAL::getCout() << "Successful." << std::endl;
   else
   {
-    std::cout << "Failed." << std::endl;
-    std::cout << "Expected Result (Length = " << massagedExpectedResultContent.size() << "): " << std::endl;
-    std::cout << massagedExpectedResultContent << std::endl;
-    std::cout << "Received Result (Length = " << massagedRunResultContent.size() << "): " << std::endl;
-    std::cout << massagedRunResultContent << std::endl;
+    AlususOSAL::getCout() << "Failed." << std::endl;
+    AlususOSAL::getCout() << "Expected Result (Length = "
+                          << massagedExpectedResultContent.size()
+                          << "): " << std::endl;
+    AlususOSAL::getCout() << massagedExpectedResultContent << std::endl;
+    AlususOSAL::getCout() << "Received Result (Length = "
+                          << massagedRunResultContent.size()
+                          << "): " << std::endl;
+    AlususOSAL::getCout() << massagedRunResultContent << std::endl;
   }
   return ret;
 }
@@ -186,7 +192,7 @@ void updateTestSnapshot(Str const &fileName)
   auto &expectedResult = *autoExpectedResultHandle.get();
   expectedResult << runResultContent;
 
-  std::cout << "Done. " << std::endl;
+  AlususOSAL::getCout() << "Done. " << std::endl;
 }
 
 
@@ -203,9 +209,9 @@ void updateTestSnapshot(Str const &fileName)
 Bool runAndCheckSourceFile(Str const &fileName)
 {
   if (getenv(S("ALUSUS_TEST_UPDATE")) != 0) {
-    std::cout << ">>> Updating " << fileName << ": ";
+    AlususOSAL::getCout() << ">>> Updating " << fileName << ": ";
   } else {
-    std::cout << ">>> Testing " << fileName << ": ";
+    AlususOSAL::getCout() << ">>> Testing " << fileName << ": ";
   }
   if (!runSourceFile(fileName))
     return false;
@@ -247,7 +253,8 @@ Bool runEndToEndTests(Str const &dirPath, Char const *ext = ".alusus")
   }
   else
   {
-    std::cout << "Could not open end-to-end tests directory: " << dirPath << " !" << std::endl;
+    AlususOSAL::getCout() << "Could not open end-to-end tests directory: "
+                          << dirPath << " !" << std::endl;
     return false;
   }
 }
@@ -268,12 +275,14 @@ int main(int argc, char **argv)
   Char alususReleaseYear[5];
   copyStr(ALUSUS_RELEASE_DATE, alususReleaseYear, 4);
   alususReleaseYear[4] = 0;
-  std::cout << "Alusus End-to-End Tests\n"
-               "Version " ALUSUS_VERSION ALUSUS_REVISION " (" ALUSUS_RELEASE_DATE ")\n"
-               "Copyright (C) " << alususReleaseYear << " Rafid Khalid Abdullah\n\n";
+  AlususOSAL::getCout() << "Alusus End-to-End Tests\n"
+                           "Version " ALUSUS_VERSION ALUSUS_REVISION
+                           " (" ALUSUS_RELEASE_DATE ")\n"
+                           "Copyright (C) "
+                        << alususReleaseYear << " Rafid Khalid Abdullah\n\n";
 
   if (argc < 3 || argc > 4) {
-    std::cout << "Invalid arguments";
+    AlususOSAL::getCout() << "Invalid arguments";
     return EXIT_FAILURE;
   }
   AlususOSAL::Path repoPath = AlususOSAL::Path((char*) __FILE__).parent_path().parent_path().parent_path();

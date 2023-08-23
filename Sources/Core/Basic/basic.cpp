@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "AlususOSAL.hpp"
 #include "core.h"
 #include <locale>
 
@@ -19,9 +20,9 @@ namespace Core { namespace Basic
 //============================================================================
 // Variables and Types
 
-std::ostream & outStream = std::cout;
+std::ostream &outStream = AlususOSAL::getCout();
 
-std::istream & inStream = std::cin;
+std::istream &inStream = AlususOSAL::getCin();
 
 typedef std::codecvt<WChar,Char,std::mbstate_t> FacetType;
 

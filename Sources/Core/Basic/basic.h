@@ -621,23 +621,23 @@ SrdRef<T> newSrdObj(ARGS... args) {
 // Global Variable Definitions
 
 /**
- * @brief A reference to std::cout to use to output to the console.
+ * @brief A reference to AlususOSAL::getCout() to use to output to the console.
  * @ingroup core_basic
  *
  * This should be used to output to the console instead of directly using
- * std::cout, in order to minimize the needed changes in case we needed to
- * support wide characters in the output stream.
+ * AlususOSAL::getCout(), in order to minimize the needed changes in case we
+ * needed to support wide characters in the output stream.
  */
 extern std::ostream &outStream;
 
 
 /**
- * @brief A reference to std::cin to use to input from the console.
+ * @brief A reference to AlususOSAL::getCin() to use to input from the console.
  * @ingroup core_basic
  *
  * This should be used to input from the console instead of directly using
- * std::cin, in order to minimize the needed changes in case we needed to
- * support wide characters in the input stream.
+ * AlususOSAL::getCin(), in order to minimize the needed changes in case we
+ * needed to support wide characters in the input stream.
  */
 extern std::istream &inStream;
 
