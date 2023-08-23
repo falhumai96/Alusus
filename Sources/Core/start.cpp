@@ -32,9 +32,11 @@ using namespace Core;
  */
 Str getSystemLanguage()
 {
-  Char const *langEnv = getenv(S("LANGUAGE"));
-  if (langEnv == 0 || getStrLen(langEnv) == 0) langEnv = getenv(S("LANG"));
-  if (langEnv == 0 || getStrLen(langEnv) == 0) langEnv = S("en");
+  Char const *langEnv = AlususOSAL::getenv(S("LANGUAGE"));
+  if (langEnv == 0 || getStrLen(langEnv) == 0)
+    langEnv = AlususOSAL::getenv(S("LANG"));
+  if (langEnv == 0 || getStrLen(langEnv) == 0)
+    langEnv = S("en");
 
   Str lang;
   lang.assign(langEnv, 2);

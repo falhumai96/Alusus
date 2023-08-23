@@ -118,6 +118,13 @@ FILE *fopen(const char *filename, const char *mode);
 int rename(const char *old_name, const char *new_name);
 int remove(const char *name);
 
+// CSTDLIB functions.
+char *getenv(const char *key);
+int system(const char *cmd);
+int setenv(const char *key, const char *value, int overwrite);
+int unsetenv(const char *key);
+int putenv(char *c_string);
+
 } // Namespace AlususOSAL.
 
 #endif

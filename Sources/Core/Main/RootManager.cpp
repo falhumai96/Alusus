@@ -63,7 +63,7 @@ RootManager::RootManager() : libraryManager(this), processedFiles(true)
   auto workingDirectory = AlususOSAL::getWorkingDirectory();
   this->pushSearchPath(workingDirectory.c_str());
   // Add the paths from ALUSUS_LIBS environment variable, after splitting it by ':'.
-  Char *alususLibs = getenv(S("ALUSUS_LIBS"));
+  Char *alususLibs = AlususOSAL::getenv(S("ALUSUS_LIBS"));
   if (alususLibs != nullptr) {
     Str envPath = alususLibs;
     Int endPos = -1;

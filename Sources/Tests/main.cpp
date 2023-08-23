@@ -208,14 +208,14 @@ void updateTestSnapshot(Str const &fileName)
  */
 Bool runAndCheckSourceFile(Str const &fileName)
 {
-  if (getenv(S("ALUSUS_TEST_UPDATE")) != 0) {
+  if (AlususOSAL::getenv(S("ALUSUS_TEST_UPDATE")) != 0) {
     AlususOSAL::getCout() << ">>> Updating " << fileName << ": ";
   } else {
     AlususOSAL::getCout() << ">>> Testing " << fileName << ": ";
   }
   if (!runSourceFile(fileName))
     return false;
-  if (getenv(S("ALUSUS_TEST_UPDATE")) != 0) {
+  if (AlususOSAL::getenv(S("ALUSUS_TEST_UPDATE")) != 0) {
     updateTestSnapshot(fileName);
     return true;
   } else {
@@ -298,13 +298,17 @@ int main(int argc, char **argv)
   Core::Notices::setSourceLocationPathSkipping(true);
 
   // Prepare a temporary filename.
-  Char const * tempPath = getenv("TMPDIR");
-  if (tempPath == 0) tempPath = getenv("TMP");
-  if (tempPath == 0) tempPath = getenv("TEMP");
-  if (tempPath == 0) tempPath = getenv("TEMPDIR");
+  Char const *tempPath = AlususOSAL::getenv("TMPDIR");
+  if (tempPath == 0)
+    tempPath = AlususOSAL::getenv("TMP");
+  if (tempPath == 0)
+    tempPath = AlususOSAL::getenv("TEMP");
+  if (tempPath == 0)
+    tempPath = AlususOSAL::getenv("TEMPDIR");
   if (tempPath == 0) tempPath = "/tmp/";
   resultFilename = tempPath;
-  if (resultFilename(resultFilename.getLength() - 1) != '/') resultFilename += "/";
+  if (resultFilename(resultFilename.getLength() - 1) != '/')
+    resultFilename += "/";
   resultFilename += "AlususEndToEndTest.txt";
 
   auto ret = EXIT_SUCCESS;

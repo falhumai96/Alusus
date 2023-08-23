@@ -52,10 +52,57 @@
 #if defined(ALUSUS_UNICODE_SUPPORTED)
 #include <nowide/args.hpp>
 #include <nowide/cstdio.hpp>
+#include <nowide/cstdlib.hpp>
 #include <nowide/fstream.hpp>
 #include <nowide/iostream.hpp>
 #else
 #include <cstdio>
+#include <cstdlib>
+#include <stdlib.h>
+#if defined(ALUSUS_WIN32)
+#include <cstring>
+static int __setenv(const char *key, const char *value, int overwrite) {
+  if (!overwrite) {
+    return (std::getenv(key) ? 0 : -1);
+  }
+  return (SetEnvironmentVariable(key, value) ? 0 : -1);
+}
+
+static int __unsetenv(const char *key) {
+  return (SetEnvironmentVariable(key, NULL) ? 0 : -1);
+}
+
+static int __putenv(char *c_string) {
+  // Get the key.
+  size_t key_start = 0;
+  size_t key_end = 0;
+  size_t current_idx = 0;
+  size_t c_string_len = std::strlen(c_string);
+  while (c_string[current_idx] != '=' && c_string[current_idx] != '\0') {
+    current_idx++;
+  }
+  // Make sure there is a key ('=' is not the first character) and there exists
+  // a '=' character after the key.
+  if (current_idx == 0 || current_idx == c_string_len) {
+    return -1;
+  }
+  key_end = current_idx;
+  std::string keyString(c_string, key_start, key_end);
+  auto key = keyString.c_str();
+
+  // Get the value.
+  auto value_start = current_idx + 1;
+  auto value_end = c_string_len;
+  std::string valueString(c_string, value_start, value_end);
+  auto value = valueString.c_str();
+
+  return (SetEnvironmentVariable(key, value) ? 0 : -1);
+}
+#else
+static constexpr int (*__unsetenv)(const char *) = unsetenv;
+static constexpr int (*__putenv)(const char *) = putenv;
+static constexpr int (*__setenv)(const char *, const char *, int) = setenv;
+#endif
 #include <fstream>
 #include <iostream>
 #endif
@@ -581,6 +628,46 @@ int remove(const char *name) {
   return nowide::remove(name);
 #else
   return std::remove(name);
+#endif
+}
+
+char *getenv(const char *key) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::getenv(key);
+#else
+  return std::getenv(key);
+#endif
+}
+
+int system(const char *cmd) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::system(cmd);
+#else
+  return std::system(cmd);
+#endif
+}
+
+int setenv(const char *key, const char *value, int overwrite) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::setenv(key, value, overwrite);
+#else
+  return __setenv(key, value, overwrite);
+#endif
+}
+
+int unsetenv(const char *key) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::unsetenv(key);
+#else
+  return __unsetenv(key);
+#endif
+}
+
+int putenv(char *c_string) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::putenv(c_string);
+#else
+  return __putenv(c_string);
 #endif
 }
 
