@@ -14,6 +14,7 @@
 #ifndef ALUSUS_OSAL
 #define ALUSUS_OSAL
 
+#include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -106,10 +107,16 @@ ofstreamOpenFile(char const *filename);
 std::unique_ptr<std::basic_ostream<char>>
 ofstreamOpenFile(std::string const &filename);
 
-// STDIN/STDOUT/STDERR.
+// STD stream.
 std::basic_istream<char> &getCin();
 std::basic_ostream<char> &getCout();
 std::basic_ostream<char> &getCerr();
+
+// CSTDIO functions.
+FILE *freopen(const char *filename, const char *mode, FILE *stream);
+FILE *fopen(const char *filename, const char *mode);
+int rename(const char *old_name, const char *new_name);
+int remove(const char *name);
 
 } // Namespace AlususOSAL.
 

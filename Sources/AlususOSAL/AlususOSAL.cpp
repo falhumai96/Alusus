@@ -51,9 +51,11 @@
 #include <mutex>
 #if defined(ALUSUS_UNICODE_SUPPORTED)
 #include <nowide/args.hpp>
+#include <nowide/cstdio.hpp>
 #include <nowide/fstream.hpp>
 #include <nowide/iostream.hpp>
 #else
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #endif
@@ -547,6 +549,38 @@ std::basic_ostream<char> &getCerr() {
   return nowide::cerr;
 #else
   return std::cerr;
+#endif
+}
+
+FILE *freopen(const char *filename, const char *mode, FILE *stream) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::freopen(filename, mode, stream);
+#else
+  return std::freopen(filename, mode, stream);
+#endif
+}
+
+FILE *fopen(const char *filename, const char *mode) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::fopen(filename, mode);
+#else
+  return std::fopen(filename, mode);
+#endif
+}
+
+int rename(const char *old_name, const char *new_name) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::rename(old_name, new_name);
+#else
+  return std::rename(old_name, new_name);
+#endif
+}
+
+int remove(const char *name) {
+#if defined(ALUSUS_UNICODE_SUPPORTED)
+  return nowide::remove(name);
+#else
+  return std::remove(name);
 #endif
 }
 

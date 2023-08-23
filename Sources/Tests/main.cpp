@@ -62,7 +62,7 @@ Bool runSourceFile(Str const &fileName)
   fpos_t pos;
   fgetpos(stdout, &pos);
   int fd = dup(fileno(stdout));
-  freopen(resultFilename,"w", stdout);
+  AlususOSAL::freopen(resultFilename, "w", stdout);
 
   try
   {
@@ -310,7 +310,7 @@ int main(int argc, char **argv)
   auto ret = EXIT_SUCCESS;
   if (!runEndToEndTests(subpath.c_str(), ext)) ret = EXIT_FAILURE;
 
-  std::remove(resultFilename);
+  AlususOSAL::remove(resultFilename);
 
   return ret;
 }
