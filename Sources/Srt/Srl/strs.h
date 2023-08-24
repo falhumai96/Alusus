@@ -505,24 +505,28 @@ template<class T> class StringBase
 // Function Specializations
 
 template<> inline void StringBase<Char>::append(LongInt i) {
-  Char buf[22];
-  sprintf(buf, "%ld", i);
+  static constexpr size_t bufsize = 22;
+  Char buf[bufsize];
+  snprintf(buf, bufsize, "%ld", i);
   this->append(buf);
 }
 template<> inline void StringBase<WChar>::append(LongInt i) {
-  WChar buf[22];
-  swprintf(buf, 22, L"%ld", i);
+  static constexpr size_t bufsize = 22;
+  WChar buf[bufsize];
+  swprintf(buf, bufsize, L"%ld", i);
   this->append(buf);
 }
 
 template<> inline void StringBase<Char>::append(Double d) {
-  Char buf[22];
-  sprintf(buf, "%f", d);
+  static constexpr size_t bufsize = 22;
+  Char buf[bufsize];
+  snprintf(buf, bufsize, "%f", d);
   this->append(buf);
 }
 template<> inline void StringBase<WChar>::append(Double d) {
-  WChar buf[22];
-  swprintf(buf, 22, L"%f", d);
+  static constexpr size_t bufsize = 22;
+  WChar buf[bufsize];
+  swprintf(buf, bufsize, L"%f", d);
   this->append(buf);
 }
 

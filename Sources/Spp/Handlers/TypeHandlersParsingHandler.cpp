@@ -439,7 +439,7 @@ Bool TypeHandlersParsingHandler::createParensOpHandler(
     if (!this->prepareInputArg(state, inputDef, inputName, inputType, params->getCount() == 1 ? S("value") : S(""))) {
       return false;
     }
-    if (inputName == S("")) {
+    if (inputName[0] == C('\0')) {
       inputName = S("__");
       inputName += (LongInt)i;
     } else if (argTypes->findIndex(inputName) != -1) {

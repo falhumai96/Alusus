@@ -105,16 +105,7 @@ target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorag
 
 if (ALUSUS_USE_RPATH)
   if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # macOS has a different mechanism for RPATH than Linux and requires special
-    # handling. More information can be found here:
-    #
-    # https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
-    #
-    # The following article also has a good explanation:
-    #
-    # https://blogs.oracle.com/dipol/dynamic-libraries,-rpath,-and-mac-os
     set_target_properties(AlususCore PROPERTIES
-      MACOSX_RPATH TRUE
       INSTALL_RPATH "@executable_path;@executable_path/../${ALUSUS_LIB_DIR_NAME}/"
     )
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

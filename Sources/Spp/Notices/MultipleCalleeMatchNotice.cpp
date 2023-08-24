@@ -27,7 +27,8 @@ void MultipleCalleeMatchNotice::buildDescription(Str &str) const
   auto loc1 = Core::Notices::getSourceLocationString(this->sourceLocation1.get());
   auto loc2 = Core::Notices::getSourceLocationString(this->sourceLocation2.get());
   str.alloc(getStrLen(fmt) + loc1.getLength() + loc2.getLength());
-  sprintf((Char*)str.getBuf(), fmt, loc1.getBuf(), loc2.getBuf());
+  snprintf((Char *)str.getBuf(), str.getLength() + 1, fmt, loc1.getBuf(),
+           loc2.getBuf());
 }
 
 Bool MultipleCalleeMatchNotice::isEqual(Notice *notice) const

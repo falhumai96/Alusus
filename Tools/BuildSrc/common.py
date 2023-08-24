@@ -105,7 +105,7 @@ def copy_if_different(src, dst, follow_src_symlinks=True, follow_dst_symlinks=Tr
     if not follow_src_symlinks and src_type == PathType.LINK:
         os.link(os.readlink(src), dst)
     elif src_type == PathType.DIR:
-        distutils.dir_util.copy_tree(src, dst, preserve_symlinks=1, update=1)
+        distutils.dir_util.copy_tree(src, dst, preserve_symlinks=1)
     elif src_type == PathType.FILE:
         shutil.copy(src, dst)
 

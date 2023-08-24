@@ -114,7 +114,7 @@ def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path
         distutils.dir_util.copy_tree(
             os.path.join(
                 common.VCPKG_ALUSUS_PORTS_OVERLAY_DIR, package_name),
-            overlay_port_location, preserve_symlinks=1, update=1
+            overlay_port_location, preserve_symlinks=1
         )
 
         # Add check that the overlay changes are fully written to desk.

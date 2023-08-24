@@ -26,7 +26,7 @@ def _create_to_be_packaged_dir(alusus_install_location, alusus_packages_location
             alusus_packages_location, "AlususToBePackaged")
     common.remove_path(to_be_packaged_dir, follow_symlinks=False)
     distutils.dir_util.copy_tree(
-        alusus_install_location, to_be_packaged_dir, preserve_symlinks=1, update=1)
+        alusus_install_location, to_be_packaged_dir, preserve_symlinks=1)
     if sys.platform == "win32":
         import ctypes
         FILE_ATTRIBUTE_HIDDEN = 0x02
@@ -40,13 +40,13 @@ def _create_to_be_packaged_dir(alusus_install_location, alusus_packages_location
         to_be_packaged_dir, "Doc"), ignore_errors=True)
     distutils.dir_util.copy_tree(
         os.path.join(common.ALUSUS_REPO_PATH, "Doc"),
-        os.path.join(to_be_packaged_dir, "Doc"), preserve_symlinks=1, update=1
+        os.path.join(to_be_packaged_dir, "Doc"), preserve_symlinks=1
     )
     shutil.rmtree(os.path.join(to_be_packaged_dir, "Notices_L18n"),
                   ignore_errors=True)
     distutils.dir_util.copy_tree(
         os.path.join(common.ALUSUS_REPO_PATH, "Notices_L18n"),
-        os.path.join(to_be_packaged_dir, "Notices_L18n"), preserve_symlinks=1, update=1
+        os.path.join(to_be_packaged_dir, "Notices_L18n"), preserve_symlinks=1
     )
     os.makedirs(os.path.join(to_be_packaged_dir, "Tools",
                 "Gtk_Syntax_Highlighting"), exist_ok=True)

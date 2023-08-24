@@ -123,8 +123,13 @@ elseif(AlususCompilerUsed STREQUAL "Cl")
   set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} /w44265 /w44130 /w44296 /wd4100 /wd4101 /wd4189 /EHsc /wd4005 /wd4146 /wd4355 /wd4800 /wd4996")  
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(CMAKE_SKIP_RPATH TRUE)
+if(ALUSUS_USE_RPATH)
+  set(CMAKE_SKIP_BUILD_RPATH OFF)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_MACOSX_RPATH ON)
+  endif()
 endif()
 
 # Clear CMAKE_CXX_FLAGS_* because we are going to provide our own compilation
