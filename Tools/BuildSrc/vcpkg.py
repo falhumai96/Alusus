@@ -3,6 +3,7 @@ import os
 import shutil
 import checksum
 import sys
+import distutils.dir_util
 
 # fmt: off
 # Alusus import(s).
@@ -110,11 +111,10 @@ def restore_ports_overlays(alusus_vcpkg_ports_overlays_location, vcpkg_repo_path
             vcpkg_repo_path, git_tree_hash, overlay_port_location)
 
         # Apply Alusus port overlay changes to the restored port files.
-        shutil.copytree(
+        distutils.dir_util.copy_tree(
             os.path.join(
                 common.VCPKG_ALUSUS_PORTS_OVERLAY_DIR, package_name),
-            overlay_port_location, dirs_exist_ok=True,
-            symlinks=True, ignore_dangling_symlinks=True
+            overlay_port_location, preserve_symlinks=1, update=1
         )
 
         # Add check that the overlay changes are fully written to desk.
