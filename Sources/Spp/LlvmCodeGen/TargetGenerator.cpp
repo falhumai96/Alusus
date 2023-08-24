@@ -434,10 +434,10 @@ Bool TargetGenerator::generateGlobalVariable(
     *(this->buildTarget->getGlobalLlvmModule()), typeWrapper->getLlvmType(), false,
     llvm::GlobalVariable::ExternalLinkage, valWrapper != 0 ? valWrapper->getLlvmConstant() : 0, name
   ));
-  #if __APPLE__
-    // TODO: This alignment should depend on build target rather than current OS.
-    var->getLlvmGlobalVariable()->setAlignment(llvm::MaybeAlign(16));
-  #endif
+#if __APPLE__
+  // TODO: This alignment should depend on build target rather than current OS.
+  var->getLlvmGlobalVariable()->setAlignment(llvm::MaybeAlign(16).valueOrOne());
+#endif
 
   result = var;
   return true;
@@ -453,10 +453,10 @@ Bool TargetGenerator::generateLocalVariable(
 
   SharedPtr<Variable> var = newSrdObj<Variable>();
   var->setLlvmAllocaInst(block->getIrBuilder()->CreateAlloca(typeWrapper->getLlvmType(), 0, name));
-  #if __APPLE__
-    // TODO: This alignment should depend on build target rather than current OS.
-    var->getLlvmAllocaInst()->setAlignment(llvm::MaybeAlign(16));
-  #endif
+#if __APPLE__
+  // TODO: This alignment should depend on build target rather than current OS.
+  var->getLlvmAllocaInst()->setAlignment(llvm::MaybeAlign(16).valueOrOne());
+#endif
   if (valWrapper != 0) {
     block->getIrBuilder()->CreateStore(valWrapper->getLlvmValue(), var->getLlvmAllocaInst());
   }
