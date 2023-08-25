@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
 #include "spp.h"
 
 namespace Spp::LlvmCodeGen
@@ -29,7 +30,7 @@ void JitBuildTarget::setupBuild()
   this->llvmTsContext = std::make_unique<llvm::orc::ThreadSafeContext>(std::make_unique<llvm::LLVMContext>());
   this->llvmContext = this->llvmTsContext->getContext();
 
-  #ifdef USE_LOGS
+  #ifdef ALUSUS_USE_LOGS
     if (Core::Basic::Logger::getFilter() & Spp::LogLevel::LLVMCODEGEN_DIAGNOSTIC) {
       this->llvmContext->setDiagnosticHandlerCallBack(&llvmDiagnosticCallback);
     }
@@ -49,7 +50,7 @@ llvm::Module* JitBuildTarget::getGlobalLlvmModule()
 
 void JitBuildTarget::addLlvmModule(std::unique_ptr<llvm::Module> module)
 {
-  #ifdef USE_LOGS
+  #ifdef ALUSUS_USE_LOGS
     if (Core::Basic::Logger::getFilter() & Spp::LogLevel::LLVMCODEGEN_IR) {
       // Dump the module to be compiled.
       outStream << S(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");

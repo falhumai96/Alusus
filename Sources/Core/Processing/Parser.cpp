@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
 #include "core.h"
 
 namespace Core::Processing
@@ -535,7 +536,7 @@ void Parser::processTokenTerm(const Data::Token * token, ParserState *state)
     if (!matched) {
       // Processing of this state has errored out.
       state->setProcessingStatus(ParserProcessingStatus::ERROR);
-      #ifdef USE_LOGS
+      #ifdef ALUSUS_USE_LOGS
         auto matchStr = ti_cast<TiStr>(matchText);
         auto matchMap = ti_cast<Core::Data::Grammar::Map>(matchText);
       #endif
@@ -1095,7 +1096,7 @@ void Parser::testTokenTerm(Data::Token const *token, ParserState *state)
     if (!matched) {
       // Processing of this state has errored out.
       state->setProcessingStatus(ParserProcessingStatus::ERROR);
-      #ifdef USE_LOGS
+      #ifdef ALUSUS_USE_LOGS
         auto matchStr = ti_cast<TiStr>(matchText);
         auto matchMap = ti_cast<Core::Data::Grammar::Map>(matchText);
       #endif

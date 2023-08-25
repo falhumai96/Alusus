@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "core.h"
+#include "AlususDefs.h"
 #include "AlususOSAL.hpp"
 
 /**
@@ -71,7 +72,7 @@ int main(int argCount, char **args)
     else if (strcmp(args[i], S("-ت")) == 0) interactive = true;
     else if (strcmp(args[i], S("--dump")) == 0) dump = true;
     else if (strcmp(args[i], S("--إلقاء")) == 0) dump = true;
-#ifdef USE_LOGS
+#ifdef ALUSUS_USE_LOGS
     // Parse the log option.
     else if (strcmp(args[i], S("--log")) == 0 || strcmp(args[i], S("--تدوين")) == 0) {
       if (i < argCount-1) {
@@ -127,7 +128,7 @@ int main(int argCount, char **args)
       outStream << S("\tالقاء شجرة AST عند الانتهاء:\n");
       outStream << S("\t\t--شجرة\n");
       outStream << S("\t\t--dump\n");
-      #if defined(USE_LOGS)
+      #if defined(ALUSUS_USE_LOGS)
         outStream << S("\tالتحكم بمستوى التدوين (قيمة من 6 بتات):\n");
         outStream << S("\t\t--تدوين\n");
         outStream << S("\t\t--log\n");
@@ -147,7 +148,7 @@ int main(int argCount, char **args)
       outStream << S("\nOptions:\n");
       outStream << S("\t--interactive, -i  Run in interactive mode.\n");
       outStream << S("\t--dump  Tells the Core to dump the resulting AST tree.\n");
-      #if defined(USE_LOGS)
+      #if defined(ALUSUS_USE_LOGS)
         outStream << S("\t--log  A 6 bit value to control the level of details of the log.\n");
       #endif
     }

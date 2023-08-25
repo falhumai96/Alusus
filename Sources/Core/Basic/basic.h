@@ -14,6 +14,8 @@
 #ifndef CORE_BASIC_BASIC_H
 #define CORE_BASIC_BASIC_H
 
+#include "AlususDefs.h"
+
 namespace Core::Basic
 {
 
@@ -333,17 +335,13 @@ namespace Core::Basic
 //==============================================================================
 // Logging Definitions
 
-#ifdef USE_LOGS
+#ifdef ALUSUS_USE_LOGS
 
 /**
  * @def LOG(l,x)
  * @brief Sends a log message to the screen.
  * @ingroup basic_macros
  *
- * To enable this macro, the USE_LOGS flag must be set, otherwise this macro
- * will do nothing. To set the flag do:<br>
- * make &lt;target&gt; "CFLAGS=-DUSE_LOGS"
- * <br><br>
  * The generated log message has this format:<br>
  * &lt;source_file&gt;(&lt;line_number&gt;): &lt;log_msg&gt;
  *
@@ -361,7 +359,7 @@ namespace Core::Basic
  *
  * Each log message should have a level value associated with it. This level
  * value is used to filter in/out log messages depending on how much details
- * are needed by the user. It's up to the programmar what level to assign to
+ * are needed by the user. It's up to the programmer what level to assign to
  * his log message. Note that these levels doesn't cover errors or warnings
  * because those should be caught by assertions and exceptions. Possible values
  * are LEXER_MINOR, LEXER_MID, LEXER_MAJOR, PARSER_MINOR, PARSER_MID, and

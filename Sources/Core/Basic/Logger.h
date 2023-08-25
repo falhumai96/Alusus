@@ -10,7 +10,9 @@
  */
 //==============================================================================
 
-#ifdef USE_LOGS
+#include "AlususDefs.h"
+
+#ifdef ALUSUS_USE_LOGS
 
 #ifndef CORE_BASIC_LOGGER_H
 #define CORE_BASIC_LOGGER_H

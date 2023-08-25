@@ -7,12 +7,6 @@
 project(AlususSrl)
 cmake_minimum_required(VERSION 3.20.0)
 
-if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS RELEASE)
-else()
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS USE_LOGS)
-endif()
-
 # Make sure the compiler finds the source files.
 include_directories("${AlususSrl_SOURCE_DIR}")
 set(CMAKE_MODULE_PATH "${AlususSrl_SOURCE_DIR}")

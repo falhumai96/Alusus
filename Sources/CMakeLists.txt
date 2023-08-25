@@ -16,8 +16,7 @@ if (NOT WIN32)
   set(ALUSUS_WIN32_UNICODE OFF)
 endif()
 
-# Read version info.
-if (NOT DEFINED Python3_EXECUTABLE)
+if(NOT DEFINED Python3_EXECUTABLE)
   # Only find Python executable once and cache it. Calling it twice will result in an
   # index out of bound error.
   #
@@ -25,16 +24,15 @@ if (NOT DEFINED Python3_EXECUTABLE)
   #
   # CMake Error at /usr/share/cmake-3.25/Modules/FindPython/Support.cmake:1887 (list):
   # list index: 10 out of range (-10, 9)
-
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   set(Python3_EXECUTABLE "${Python3_EXECUTABLE}" CACHE STRING
     "Python 3 executable")
-endif ()
+endif()
+
+# Read version info.
 execute_process(COMMAND ${Python3_EXECUTABLE} version_info.py
-                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc"
-                OUTPUT_VARIABLE VersionInfo)
-execute_process(COMMAND ${Python3_EXECUTABLE} generate_defs_header.py "${CMAKE_BINARY_DIR}/AlususDefs" "--bin-dir-name" "${ALUSUS_BIN_DIR_NAME}" "--lib-dir-name" "${ALUSUS_LIB_DIR_NAME}" "--include-dir-name" "${ALUSUS_INCLUDE_DIR_NAME}"
-                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc")
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc"
+  OUTPUT_VARIABLE VersionInfo COMMAND_ERROR_IS_FATAL ANY)
 string(REGEX MATCH "VERSION: ([0-9]+\\.[0-9]+\\.[0-9]+)" _dummy_ ${VersionInfo})
 set(AlususVersion ${CMAKE_MATCH_1})
 string(REGEX MATCH "^[0-9]+\\.[0-9]+" AlususShlibVersion ${AlususVersion})
@@ -53,16 +51,6 @@ message(STATUS "Alusus Shlib Version: " ${AlususShlibVersion})
 message(STATUS "Alusus Release Date: " ${AlususReleaseDate})
 message(STATUS "Alusus Hijri Release Date: " ${AlususHijriReleaseDate})
 
-set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS ALUSUS_VERSION="${AlususVersion}"
-                                                           ALUSUS_REVISION="${AlususRevision}"
-                                                           ALUSUS_RELEASE_DATE="${AlususReleaseDate}"
-                                                           ALUSUS_HIJRI_RELEASE_DATE="${AlususHijriReleaseDate}")
-STRING(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
-if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS RELEASE)
-else()
-  set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS USE_LOGS)
-endif()
 
 # Detect the supported compiler used.
 function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR RETURN_MSG_VAR)
@@ -80,11 +68,11 @@ function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR RETURN_MSG_
     set(${RETURN_MSG_VAR} "Darwin LLVM/Clang compiler" PARENT_SCOPE)
   elseif(CMAKE_${COMPILER_TO_CHECK}_COMPILER_ID STREQUAL "Clang")
     if(NOT DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT OR
-       (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL "GNU") OR
-       (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL ""))
+      (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL "GNU") OR
+      (DEFINED CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT AND CMAKE_${COMPILER_TO_CHECK}_COMPILER_FRONTEND_VARIANT STREQUAL ""))
       if(NOT DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID OR
-         (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL "GNU") OR
-         (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL ""))
+        (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL "GNU") OR
+        (DEFINED CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID AND CMAKE_${COMPILER_TO_CHECK}_SIMULATE_ID STREQUAL ""))
         # GNU Clang compiler.
         set(${RETURN_VALUE_VAR} "GNUClang" PARENT_SCOPE)
         set(${RETURN_MSG_VAR} "LLVM/Clang compiler with GNU ABI" PARENT_SCOPE)
@@ -109,7 +97,25 @@ endfunction()
 
 
 alusus_get_compiler_used("CXX" AlususCompilerUsed AlususCompilerUsedMsg)
-message(STATUS "Compiler used: ${AlususCompilerUsedMsg}")
+message(STATUS "Alusus compiler used: ${AlususCompilerUsedMsg}")
+
+# Generate Alusus definitions.
+execute_process(COMMAND
+  "${Python3_EXECUTABLE}" generate_defs_header.py
+  "${CMAKE_BINARY_DIR}/AlususDefs"
+  "${AlususVersion}"
+  "${AlususRevision}"
+  "${AlususShlibVersion}"
+  "${AlususReleaseDate}"
+  "${AlususHijriReleaseDate}"
+  "${AlususCompilerUsed}"
+  "${CMAKE_BUILD_TYPE}"
+  "${CMAKE_SYSTEM_NAME}"
+  "${CMAKE_SYSTEM_PROCESSOR}"
+  "${ALUSUS_BIN_DIR_NAME}"
+  "${ALUSUS_LIB_DIR_NAME}"
+  "${ALUSUS_INCLUDE_DIR_NAME}"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc" COMMAND_ERROR_IS_FATAL ANY)
 
 # Prepare compile and link flags based on the compiler selected.
 if(AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "MSVCClang" OR AlususCompilerUsed STREQUAL "AppleClang")

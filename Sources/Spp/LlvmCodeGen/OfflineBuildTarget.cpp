@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
 #include "spp.h"
 
 namespace Spp::LlvmCodeGen
@@ -44,7 +45,7 @@ void OfflineBuildTarget::setupBuild()
   this->llvmDataLayout = std::make_unique<llvm::DataLayout>(this->targetMachine->createDataLayout());
 
   this->llvmContext = std::make_unique<llvm::LLVMContext>();
-  #ifdef USE_LOGS
+  #ifdef ALUSUS_USE_LOGS
     if (Core::Basic::Logger::getFilter() & Spp::LogLevel::LLVMCODEGEN_DIAGNOSTIC) {
       this->llvmContext->setDiagnosticHandlerCallBack(&llvmDiagnosticCallback);
     }
@@ -64,7 +65,7 @@ llvm::Module* OfflineBuildTarget::getGlobalLlvmModule()
 
 void OfflineBuildTarget::addLlvmModule(std::unique_ptr<llvm::Module> module)
 {
-  #ifdef USE_LOGS
+  #ifdef ALUSUS_USE_LOGS
     if (Core::Basic::Logger::getFilter() & Spp::LogLevel::LLVMCODEGEN_IR) {
       // Dump the module to be compiled.
       outStream << S(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");

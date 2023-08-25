@@ -39,6 +39,17 @@ set_target_properties(AlususStorage PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
+if (ALUSUS_USE_RPATH)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set_target_properties(AlususStorage PROPERTIES
+      INSTALL_RPATH "@executable_path;@executable_path/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set_target_properties(AlususStorage PROPERTIES
+      INSTALL_RPATH "$ORIGIN;$ORIGIN/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  endif()
+endif()
 target_link_libraries(AlususStorage PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 target_include_directories(AlususStorage PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
@@ -130,13 +141,19 @@ install(TARGETS AlususStorage AlususCoreLib AlususCore
 )
 
 # Add an install command to create the Arabic symbolic link.
-if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  set(AlususArabicLink ${CMAKE_INSTALL_PREFIX}/${ALUSUS_BIN_DIR_NAME}/الأسس)
-  set(AlususArabicLinkTarget alusus)
-else()
+if ("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
   set(AlususArabicLink ${CMAKE_INSTALL_PREFIX}/${ALUSUS_BIN_DIR_NAME}/الأسس.نقح)
   set(AlususArabicLinkTarget alusus.dbg)
+else()
+  set(AlususArabicLink ${CMAKE_INSTALL_PREFIX}/${ALUSUS_BIN_DIR_NAME}/الأسس)
+  set(AlususArabicLinkTarget alusus)
 endif()
 string(REPLACE "//" "/" AlususArabicLink ${AlususArabicLink})
 string(REPLACE "//" "/" AlususArabicLinkTarget ${AlususArabicLinkTarget})
-install(CODE "execute_process(COMMAND \"ln\" \"-sf\" ${AlususArabicLinkTarget} ${AlususArabicLink})")
+
+install(CODE "execute_process( \
+    COMMAND ${CMAKE_COMMAND} -E create_symlink \
+    ${AlususArabicLinkTarget} \
+    ${AlususArabicLink}   \
+    COMMAND_ERROR_IS_FATAL ANY)"
+)

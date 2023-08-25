@@ -10,9 +10,10 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
 #include "core.h"
 
-#ifdef USE_LOGS
+#ifdef ALUSUS_USE_LOGS
 
 namespace Core { namespace Basic
 {

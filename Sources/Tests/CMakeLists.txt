@@ -53,6 +53,17 @@ set(AlususTestsSourceFiles
 )
 
 add_executable(AlususTests ${AlususTestsSourceFiles} ${AlususTests_Header_Files})
+if(ALUSUS_USE_RPATH)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set_target_properties(AlususTests PROPERTIES
+      INSTALL_RPATH "@executable_path;@executable_path/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set_target_properties(AlususTests PROPERTIES
+      INSTALL_RPATH "$ORIGIN;$ORIGIN/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  endif()
+endif()
 set_target_properties(AlususTests PROPERTIES
   COMPILE_FLAGS "${Alusus_COMPILE_FLAGS}"
   CXX_STANDARD 17
@@ -93,6 +104,17 @@ set_target_properties(CppInteropTest PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
+if(ALUSUS_USE_RPATH)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set_target_properties(CppInteropTest PROPERTIES
+      INSTALL_RPATH "@executable_path;@executable_path/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set_target_properties(CppInteropTest PROPERTIES
+      INSTALL_RPATH "$ORIGIN;$ORIGIN/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  endif()
+endif()
 target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
 target_include_directories(CppInteropTest PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)

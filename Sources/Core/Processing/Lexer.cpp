@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
 #include "core.h"
 
 namespace Core::Processing
@@ -522,7 +523,7 @@ void Lexer::processStartChar(WChar inputChar)
     }
   }
 
-  #ifdef USE_LOGS
+  #ifdef ALUSUS_USE_LOGS
     for (Int i = 0; i < static_cast<Int>(this->nextStateCount); ++i) {
       Int index = this->nextStates[i]->getTokenDefIndex();
       Int id = this->getSymbolDefinition(index)->getId();
@@ -576,7 +577,7 @@ void Lexer::processNextChar(WChar inputChar)
     }
   }
 
-  #ifdef USE_LOGS
+  #ifdef ALUSUS_USE_LOGS
     for (Int i = 0; i < static_cast<Int>(this->nextStateCount); ++i) {
       Int index = this->nextStates[i]->getTokenDefIndex();
       Int id = this->getSymbolDefinition(index)->getId();

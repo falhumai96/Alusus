@@ -10,10 +10,11 @@
  */
 //==============================================================================
 
+#include "AlususDefs.h"
+#include "AlususOSAL.hpp"
 #include "core.h"
-#include <sys/stat.h>
 #include <stdlib.h>
-#include <AlususOSAL.hpp>
+#include <sys/stat.h>
 
 namespace Core::Main
 {
@@ -329,7 +330,7 @@ Bool RootManager::tryFileName(Char const *path, std::array<Char,PATH_MAX> &resul
   Int fnIndex = filename - path;
   Int fnLen = pathLen - fnIndex;
 
-  #ifndef RELEASE
+  #ifdef ALUSUS_USE_LOGS
     // Try debug library extension.
     #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
       copyStr(path, resultFilename.data());

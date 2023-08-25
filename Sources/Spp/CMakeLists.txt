@@ -21,9 +21,9 @@ include_directories("${AlususCore_SOURCE_DIR}")
 # Let's suppose we want to build a JIT compiler with support for
 # binary code (no interpreter):
 execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs core mcjit orcjit x86 aarch64 arm powerpc systemz webassembly
-                OUTPUT_VARIABLE REQ_LLVM_LIBRARIES)
+                OUTPUT_VARIABLE REQ_LLVM_LIBRARIES COMMAND_ERROR_IS_FATAL ANY)
 execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --system-libs
-                OUTPUT_VARIABLE REQ_SYSTEM_LIBRARIES)
+                OUTPUT_VARIABLE REQ_SYSTEM_LIBRARIES COMMAND_ERROR_IS_FATAL ANY)
 if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # Replace -llibxml2.tbd with -lxml2 in REQ_SYSTEM_LIBRARIES to fix issue in macOS.
   # TODO: Remove this hack after moving to a newer version of LLVM that fixes it.
@@ -71,6 +71,17 @@ set_target_properties(AlususSpp PROPERTIES
   VERSION ${AlususVersion}
   SHLIBVERSION ${AlususShlibVersion}
 )
+if(ALUSUS_USE_RPATH)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set_target_properties(AlususSpp PROPERTIES
+      INSTALL_RPATH "@executable_path;@executable_path/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set_target_properties(AlususSpp PROPERTIES
+      INSTALL_RPATH "$ORIGIN;$ORIGIN/../${ALUSUS_LIB_DIR_NAME}/"
+    )
+  endif()
+endif()
 target_precompile_headers(AlususSpp PRIVATE "spp.h")
 target_include_directories(AlususSpp PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
 if (ALUSUS_WIN32_UNICODE)
