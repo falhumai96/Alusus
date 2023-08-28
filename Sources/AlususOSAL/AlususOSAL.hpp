@@ -77,6 +77,16 @@ public:
   std::string string() const;
   const char *c_str() const;
   Path parent_path() const;
+  Path filename() const;
+  Path extension() const;
+  bool exists() const;
+  bool is_regular_file() const;
+  bool is_directory() const;
+  bool is_symlink() const;
+  bool is_absolute() const;
+  bool empty() const;
+  Path absolute() const;
+  Path canonical() const;
   // Add more std::filesystem::path method replacement as necessary.
 
 private:
@@ -124,6 +134,17 @@ int system(const char *cmd);
 int setenv(const char *key, const char *value, int overwrite);
 int unsetenv(const char *key);
 int putenv(char *c_string);
+
+// Create possible OS lib names based on the OS being compiled for and whether
+// or not this is a debug build.
+std::vector<std::string> constructShlibNames(char const *libname);
+std::vector<std::string> constructShlibNames(std::string const &libname);
+std::vector<std::string> constructShlibNames(Path const &libname);
+
+// Parse a string of the format found in PATH/Path (Unix/Windows) environment
+// variable into a list of <Path>s.
+std::vector<Path> parsePathVariable(char const *pathVar);
+std::vector<Path> parsePathVariable(std::string const &pathVar);
 
 } // Namespace AlususOSAL.
 

@@ -13,26 +13,21 @@
 #include "AlususDefs.h"
 #include "AlususOSAL.hpp"
 #include "core.h"
+#include <cstddef>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <vector>
 
 namespace Core::Main
 {
 
-Char const *sourceExtensions[] = {
-  S(".alusus"),
-  S(".source"),
-  S(".الأسس"),
-  S(".أسس"),
-  S(".مصدر")
-};
-
+static std::vector<char const *> sourceExtensions = {
+    S(".alusus"), S(".source"), S(".الأسس"), S(".أسس"), S(".مصدر")};
 
 //==============================================================================
 // Constructor
 
-RootManager::RootManager() : libraryManager(this), processedFiles(true)
-{
+RootManager::RootManager() : libraryManager(this), processedFiles(true) {
   this->rootScope = Data::Ast::Scope::create();
   this->rootScope->setProdId(ID_GENERATOR->getId("Root"));
   this->exprRootScope = Data::Ast::Scope::create();
@@ -56,32 +51,28 @@ RootManager::RootManager() : libraryManager(this), processedFiles(true)
   auto coreBinPathOsPath = AlususOSAL::getModuleDirectory();
 
   // Initialize current paths.
-  this->pushSearchPath(this->coreBinPath);
-  for (auto& defaultLibPath : AlususOSAL::getAlususPackageLibDirNames()) {
-    auto defaultLibFullPath = coreBinPathOsPath / defaultLibPath;
-    this->pushSearchPath(defaultLibFullPath.c_str());
+
+  // Module directory.
+  this->pushSearchPath(coreBinPathOsPath);
+
+  // Package lib dirnames.
+  for (auto &defaultLibPath : AlususOSAL::getAlususPackageLibDirNames()) {
+    auto defaultLibFullPath = coreBinPathOsPath.parent_path() / defaultLibPath;
+    this->pushSearchPath(defaultLibFullPath);
   }
-  auto workingDirectory = AlususOSAL::getWorkingDirectory();
-  this->pushSearchPath(workingDirectory.c_str());
-  // Add the paths from ALUSUS_LIBS environment variable, after splitting it by ':'.
-  Char *alususLibs = AlususOSAL::getenv(S("ALUSUS_LIBS"));
-  if (alususLibs != nullptr) {
-    Str envPath = alususLibs;
-    Int endPos = -1;
-    Str path;
-    while (endPos < static_cast<Int>(envPath.getLength())) {
-      Int startPos = endPos+1;
-      endPos = envPath.find(startPos, C(':'));
-      if (endPos == -1) endPos = envPath.getLength();
-      path.assign(envPath, startPos, endPos-startPos);
-      if (path.getLength() > 0) {
-        this->pushSearchPath(path);
-      }
-    }
+
+  // Current working directory.
+  this->pushSearchPath(AlususOSAL::getWorkingDirectory());
+
+  // Paths from "ALUSUS_LIBS" environment variable.
+  auto alususPaths =
+      AlususOSAL::parsePathVariable(AlususOSAL::getenv(S("ALUSUS_LIBS")));
+  for (auto &path : alususPaths) {
+    this->pushSearchPath(path);
   }
+
   // TODO: Do we need to add the paths from LD_LIBRARY_PATH env variable?
 }
-
 
 //==============================================================================
 // Member Functions
@@ -116,56 +107,52 @@ SharedPtr<TiObject> RootManager::parseExpression(Char const *str)
   return result;
 }
 
-
-SharedPtr<TiObject> RootManager::processString(Char const *str, Char const *name)
-{
+SharedPtr<TiObject> RootManager::processString(Char const *str,
+                                               Char const *name) {
   Processing::Engine engine(this->rootScope);
   this->noticeSignal.relay(engine.noticeSignal);
   return engine.processString(str, name);
 }
 
-
-SharedPtr<TiObject> RootManager::processFile(Char const *filename, Bool allowReprocess)
-{
+SharedPtr<TiObject> RootManager::processFile(Char const *filename,
+                                             Bool allowReprocess) {
   // Find the absolute path of the requested file.
-  thread_local static std::array<Char,PATH_MAX> resultFilename;
-  if (this->findFile(filename, resultFilename)) {
-    return this->_processFile(resultFilename.data(), allowReprocess);
+  thread_local static AlususOSAL::Path resultFilename;
+  AlususOSAL::Path inputFilename = (char *)filename;
+  if (this->findFile(inputFilename, resultFilename)) {
+    return this->_processFile(resultFilename, allowReprocess);
   } else {
     throw EXCEPTION(FileException, filename, C('r'));
   }
 }
 
-
-SharedPtr<TiObject> RootManager::_processFile(Char const *fullPath, Bool allowReprocess)
-{
+SharedPtr<TiObject> RootManager::_processFile(AlususOSAL::Path const &fullPath,
+                                              Bool allowReprocess) {
   // Do not reprocess if already processed.
   if (!allowReprocess) {
-    if (this->processedFiles.findIndex(fullPath) != -1) return TioSharedPtr::null;
+    if (this->processedFiles.findIndex(fullPath.c_str()) != -1)
+      return TioSharedPtr::null;
   }
-  this->processedFiles.add(fullPath, TioSharedPtr::null);
+  this->processedFiles.add(fullPath.c_str(), TioSharedPtr::null);
 
   // Extract the directory part and add it to the current paths.
-  Str searchPath;
-  Char const *dirEnd = strrchr(fullPath, C('/'));
-  if (dirEnd != 0) {
-    searchPath = Str(fullPath, 0, dirEnd - fullPath + 1);
-    this->pushSearchPath(searchPath);
+  auto parentDir = fullPath.parent_path();
+  if (!parentDir.empty()) {
+    this->pushSearchPath(parentDir);
   }
 
   // Process the file.
   Processing::Engine engine(this->rootScope);
   this->noticeSignal.relay(engine.noticeSignal);
-  auto result = engine.processFile(fullPath);
+  auto result = engine.processFile(fullPath.c_str());
 
   // Remove the added path, if any.
-  if (searchPath.getLength() > 0) {
-    this->popSearchPath(searchPath);
+  if (!parentDir.empty()) {
+    this->popSearchPath(parentDir);
   }
 
   return result;
 }
-
 
 SharedPtr<TiObject> RootManager::processStream(Processing::CharInStreaming *is, Char const *streamName)
 {
@@ -174,16 +161,17 @@ SharedPtr<TiObject> RootManager::processStream(Processing::CharInStreaming *is, 
   return engine.processStream(is, streamName);
 }
 
-
-Bool RootManager::tryImportFile(Char const *filename, Str &errorDetails)
-{
+Bool RootManager::tryImportFile(Char const *filename, Str &errorDetails) {
   // Lookup the file in the search paths.
   Bool loadSource = false;
-  thread_local static std::array<Char,PATH_MAX> resultFilename;
-  if (this->findFile(filename, resultFilename)) {
-    filename = resultFilename.data();
-    for (Int i = 0; i < sizeof(sourceExtensions) / sizeof(sourceExtensions[0]); ++i) {
-      if (compareStrSuffix(filename, sourceExtensions[i])) {
+
+  AlususOSAL::Path inputFilename = (char *)filename;
+  thread_local static AlususOSAL::Path resultFilename;
+
+  if (this->findFile(inputFilename, resultFilename)) {
+    auto resultExtension = resultFilename.extension().string();
+    for (auto &extension : sourceExtensions) {
+      if (resultExtension == extension) {
         loadSource = true;
         break;
       }
@@ -195,7 +183,7 @@ Bool RootManager::tryImportFile(Char const *filename, Str &errorDetails)
     try {
       LOG(LogLevel::PARSER_MAJOR, S("Importing source file: ") << filename);
 
-      this->_processFile(filename);
+      this->_processFile(resultFilename);
       return true;
     } catch (...) {
       return false;
@@ -204,176 +192,121 @@ Bool RootManager::tryImportFile(Char const *filename, Str &errorDetails)
     // Load a library.
     LOG(LogLevel::PARSER_MAJOR, S("Importing library: ") << filename);
 
-    PtrWord id = this->getLibraryManager()->load(filename, errorDetails);
+    PtrWord id =
+        this->getLibraryManager()->load(resultFilename.c_str(), errorDetails);
 
     return id != 0;
   }
 }
 
+void RootManager::pushSearchPath(AlususOSAL::Path const &path) {
+  if (path.empty()) {
+    throw EXCEPTION(InvalidArgumentException, S("path"),
+                    S("Argument is null or empty string."));
+  }
 
-void RootManager::pushSearchPath(Char const *path)
-{
-  if (path == 0 || *path == C('\0')) {
-    throw EXCEPTION(InvalidArgumentException, S("path"), S("Argument is null or empty string."));
-  }
   // Only accept absolute paths.
-  if (*path != C('/')) {
-    throw EXCEPTION(InvalidArgumentException, S("path"), S("Path must be an absolute path."));
+  if (!path.is_absolute()) {
+    throw EXCEPTION(InvalidArgumentException, S("path"),
+                    S("Path must be an absolute path."));
   }
-  Str fullPath(path);
-  if (fullPath(fullPath.getLength() - 1) != C('/')) fullPath += C('/');
-  // Only add the path if it doesn't already exists.
-  // We will only check the top of the stack. If this path exists deeper in the stack then we'll
-  // add it again to make it available at the top of the stack. We won't remove the other copy
-  // coz we don't expect any penalties from keeping it there.
-  if (!this->searchPaths.empty() && this->searchPaths.back() == fullPath) {
+
+  // Only add the path if it doesn't already exist.
+  // We will only check the top of the stack. If this path exists deeper in the
+  // stack then we'll add it again to make it available at the top of the stack.
+  // We won't remove the other copy because we don't expect any penalties from
+  // keeping it there.
+  if (!this->searchPaths.empty() && this->searchPaths.back() == path.c_str()) {
     ++this->searchPathCounts.back();
   } else {
-    this->searchPaths.push_back(fullPath);
+    this->searchPaths.push_back(path.c_str());
     this->searchPathCounts.push_back(1);
   }
 }
 
+void RootManager::popSearchPath(AlususOSAL::Path const &path) {
+  if (path.empty()) {
+    throw EXCEPTION(InvalidArgumentException, S("path"),
+                    S("Argument is null or empty string."));
+  }
 
-void RootManager::popSearchPath(Char const *path)
-{
-  if (path == 0 || *path == C('\0')) {
-    throw EXCEPTION(InvalidArgumentException, S("path"), S("Argument is null or empty string."));
-  }
   // Only accept absolute paths.
-  if (*path != C('/')) {
-    throw EXCEPTION(InvalidArgumentException, S("path"), S("Path must be an absolute path."), path);
+  if (!path.is_absolute()) {
+    throw EXCEPTION(InvalidArgumentException, S("path"),
+                    S("Path must be an absolute path."));
   }
-  Str fullPath(path);
-  if (fullPath(fullPath.getLength() - 1) != C('/')) fullPath += C('/');
-  // Search for the path to pop.
-  for (Int i = this->searchPaths.size()-1; i >= 0; --i) {
-    if (this->searchPaths[i] == fullPath) {
+
+  for (size_t i = this->searchPaths.size() - 1; i >= 0; --i) {
+    if (this->searchPaths[i] == path.c_str()) {
       // Decrement the count and only remove it when it reaches 0.
       --this->searchPathCounts[i];
       if (this->searchPathCounts[i] == 0) {
-        this->searchPaths.erase(this->searchPaths.begin()+i);
-        this->searchPathCounts.erase(this->searchPathCounts.begin()+i);
+        this->searchPaths.erase(this->searchPaths.begin() + i);
+        this->searchPathCounts.erase(this->searchPathCounts.begin() + i);
       }
       return;
     }
   }
-  throw EXCEPTION(InvalidArgumentException, S("path"), S("Path was not found in the stack."), path);
+  throw EXCEPTION(InvalidArgumentException, S("path"),
+                  S("Path was not found in the stack."), path.c_str());
 }
 
-
-Bool RootManager::findFile(Char const *filename, std::array<Char,PATH_MAX> &resultFilename)
-{
-  if (filename == 0 || *filename == C('\0')) {
-    throw EXCEPTION(InvalidArgumentException, S("filename"), S("Argument is null or empty string."));
+Bool RootManager::findFile(AlususOSAL::Path const &filename,
+                           AlususOSAL::Path &resultFilename) {
+  if (filename.empty()) {
+    throw EXCEPTION(InvalidArgumentException, S("filename"),
+                    S("Argument is null or empty string."));
   }
 
-  thread_local static std::array<Char,PATH_MAX> tmpFilename;
-
   // Is the filename an absolute path already?
-  if (filename[0] == C('/')) {
-    if (this->tryFileName(filename, tmpFilename)) {
-        #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-          _fullpath(resultFilename.data(), tmpFilename.data(), PATH_MAX);
-        #else
-          realpath(tmpFilename.data(), resultFilename.data());
-        #endif
+  if (filename.is_absolute()) {
+    if (this->tryFileName(filename, resultFilename)) {
+      resultFilename = resultFilename.canonical();
       return true;
     }
   } else {
     // Try all current paths.
-    thread_local static std::array<Char,PATH_MAX> fullPath;
-    for (Int i = this->searchPaths.size()-1; i >= 0; --i) {
-      Int len = this->searchPaths[i].getLength();
-      copyStr(this->searchPaths[i], fullPath.data());
-      if (fullPath.data()[len - 1] != C('/')) {
-        copyStr(S("/"), fullPath.data() + len);
-        ++len;
-      }
-      copyStr(filename, fullPath.data() + len);
-
-      if (this->tryFileName(fullPath.data(), tmpFilename)) {
-        #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-          _fullpath(resultFilename.data(), tmpFilename.data(), PATH_MAX);
-        #else
-          realpath(tmpFilename.data(), resultFilename.data());
-        #endif
+    for (size_t idx = this->searchPaths.size() - 1; idx >= 0; --idx) {
+      AlususOSAL::Path searchFilename = (char *)this->searchPaths[idx].getBuf();
+      searchFilename /= filename;
+      if (this->tryFileName(searchFilename, resultFilename)) {
+        resultFilename = resultFilename.canonical();
         return true;
       }
     }
   }
 
-  // No file was found with that name.
   return false;
 }
 
-
-Bool RootManager::tryFileName(Char const *path, std::array<Char,PATH_MAX> &resultFilename)
-{
-  if (this->doesFileExist(path)) {
-    copyStr(path, resultFilename.data());
+Bool RootManager::tryFileName(AlususOSAL::Path const &filename,
+                              AlususOSAL::Path &resultFilename) {
+  if (filename.is_regular_file()) {
+    resultFilename = filename;
     return true;
   }
 
-  auto pathLen = getStrLen(path);
-
   // Try source extensions.
-  for (Int i = 0; i < sizeof(sourceExtensions) / sizeof(sourceExtensions[0]); ++i) {
-    copyStr(path, resultFilename.data());
-    copyStr(sourceExtensions[i], resultFilename.data()+pathLen);
-    if (this->doesFileExist(resultFilename.data())) return true;
+  for (auto &extension : sourceExtensions) {
+    auto newPath = AlususOSAL::Path(filename.string() + extension);
+    if (newPath.is_regular_file()) {
+      resultFilename = newPath;
+      return true;
+    }
   }
 
-  Char const *filename = strrchr(path, C('/'));
-  if (filename == 0) filename = path;
-  else ++filename;
-  Int fnIndex = filename - path;
-  Int fnLen = pathLen - fnIndex;
-
-  #ifdef ALUSUS_USE_LOGS
-    // Try debug library extension.
-    #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-      copyStr(path, resultFilename.data());
-      copyStr(S(".dbg.dll"), resultFilename.data()+pathLen);
-    #elif __APPLE__
-      copyStr(path, resultFilename.data(), fnIndex);
-      copyStr(S("lib"), resultFilename.data()+fnIndex);
-      copyStr(filename, resultFilename.data()+fnIndex+3);
-      copyStr(S(".dbg.dylib"), resultFilename.data()+fnIndex+3+fnLen);
-    #else
-      copyStr(path, resultFilename.data(), fnIndex);
-      copyStr(S("lib"), resultFilename.data()+fnIndex);
-      copyStr(filename, resultFilename.data()+fnIndex+3);
-      copyStr(S(".dbg.so"), resultFilename.data()+fnIndex+3+fnLen);
-    #endif
-    if (this->doesFileExist(resultFilename.data())) return true;
-  #endif
-
-  // Try normal lib.
-  #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-    copyStr(path, resultFilename.data());
-    copyStr(S(".dll"), resultFilename.data()+pathLen);
-  #elif __APPLE__
-    copyStr(path, resultFilename.data(), fnIndex);
-    copyStr(S("lib"), resultFilename.data()+fnIndex);
-    copyStr(filename, resultFilename.data()+fnIndex+3);
-    copyStr(S(".dylib"), resultFilename.data()+fnIndex+3+fnLen);
-  #else
-    copyStr(path, resultFilename.data(), fnIndex);
-    copyStr(S("lib"), resultFilename.data()+fnIndex);
-    copyStr(filename, resultFilename.data()+fnIndex+3);
-    copyStr(S(".so"), resultFilename.data()+fnIndex+3+fnLen);
-  #endif
-  if (this->doesFileExist(resultFilename.data())) return true;
+  // Try OS libraries.
+  auto filenameDir = filename.parent_path();
+  auto shlibNames = AlususOSAL::constructShlibNames(filename.filename());
+  for (auto &shlibName : shlibNames) {
+    auto newPath = filenameDir / shlibName;
+    if (newPath.is_regular_file()) {
+      resultFilename = newPath;
+      return true;
+    }
+  }
 
   return false;
-}
-
-
-Bool RootManager::doesFileExist(Char const *filename)
-{
-  struct stat buffer;
-  return (stat (filename, &buffer) == 0 && (buffer.st_mode & S_IFMT) != S_IFDIR);
 }
 
 } // namespace
