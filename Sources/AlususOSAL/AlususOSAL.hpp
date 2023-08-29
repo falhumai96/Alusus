@@ -92,6 +92,7 @@ public:
 private:
   struct PathData;
   std::unique_ptr<PathData> m_data;
+  void pathDataReset();
 };
 
 // Get the directory where the module is.

@@ -15,6 +15,7 @@
 #include "core.h"
 #include <cstddef>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <vector>
 
@@ -117,7 +118,7 @@ SharedPtr<TiObject> RootManager::processString(Char const *str,
 SharedPtr<TiObject> RootManager::processFile(Char const *filename,
                                              Bool allowReprocess) {
   // Find the absolute path of the requested file.
-  thread_local static AlususOSAL::Path resultFilename;
+  AlususOSAL::Path resultFilename;
   AlususOSAL::Path inputFilename = (char *)filename;
   if (this->findFile(inputFilename, resultFilename)) {
     return this->_processFile(resultFilename, allowReprocess);
@@ -166,7 +167,7 @@ Bool RootManager::tryImportFile(Char const *filename, Str &errorDetails) {
   Bool loadSource = false;
 
   AlususOSAL::Path inputFilename = (char *)filename;
-  thread_local static AlususOSAL::Path resultFilename;
+  AlususOSAL::Path resultFilename;
 
   if (this->findFile(inputFilename, resultFilename)) {
     auto resultExtension = resultFilename.extension().string();
@@ -216,10 +217,11 @@ void RootManager::pushSearchPath(AlususOSAL::Path const &path) {
   // stack then we'll add it again to make it available at the top of the stack.
   // We won't remove the other copy because we don't expect any penalties from
   // keeping it there.
-  if (!this->searchPaths.empty() && this->searchPaths.back() == path.c_str()) {
+  if (!this->searchPaths.empty() &&
+      strcmp(this->searchPaths.back().c_str(), path.c_str()) == 0) {
     ++this->searchPathCounts.back();
   } else {
-    this->searchPaths.push_back(path.c_str());
+    this->searchPaths.push_back(path);
     this->searchPathCounts.push_back(1);
   }
 }
@@ -237,7 +239,7 @@ void RootManager::popSearchPath(AlususOSAL::Path const &path) {
   }
 
   for (size_t i = this->searchPaths.size() - 1; i >= 0; --i) {
-    if (this->searchPaths[i] == path.c_str()) {
+    if (strcmp(this->searchPaths[i].c_str(), path.c_str()) == 0) {
       // Decrement the count and only remove it when it reaches 0.
       --this->searchPathCounts[i];
       if (this->searchPathCounts[i] == 0) {
@@ -267,7 +269,7 @@ Bool RootManager::findFile(AlususOSAL::Path const &filename,
   } else {
     // Try all current paths.
     for (size_t idx = this->searchPaths.size() - 1; idx >= 0; --idx) {
-      AlususOSAL::Path searchFilename = (char *)this->searchPaths[idx].getBuf();
+      AlususOSAL::Path searchFilename = this->searchPaths[idx];
       searchFilename /= filename;
       if (this->tryFileName(searchFilename, resultFilename)) {
         resultFilename = resultFilename.canonical();
@@ -286,9 +288,13 @@ Bool RootManager::tryFileName(AlususOSAL::Path const &filename,
     return true;
   }
 
+  auto filenameDir = filename.parent_path();
+
   // Try source extensions.
   for (auto &extension : sourceExtensions) {
-    auto newPath = AlususOSAL::Path(filename.string() + extension);
+    auto filenameComponent = filename.filename().string();
+    filenameComponent += extension;
+    auto newPath = filenameDir / filenameComponent;
     if (newPath.is_regular_file()) {
       resultFilename = newPath;
       return true;
@@ -296,7 +302,6 @@ Bool RootManager::tryFileName(AlususOSAL::Path const &filename,
   }
 
   // Try OS libraries.
-  auto filenameDir = filename.parent_path();
   auto shlibNames = AlususOSAL::constructShlibNames(filename.filename());
   for (auto &shlibName : shlibNames) {
     auto newPath = filenameDir / shlibName;

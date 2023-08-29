@@ -55,7 +55,7 @@ int main(int argCount, char **args)
   // Set the codepage.
   AlususOSAL::UTF8CodePage utf8CodePageSetter;
 
-  // Get the UTF-8 args.
+  // Convert args to UTF-8.
   AlususOSAL::Args argsConverter(argCount, args);
 
   Bool help = false;

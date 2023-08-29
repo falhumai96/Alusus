@@ -270,7 +270,7 @@ int main(int argc, char **argv)
   // Set the codepage.
   AlususOSAL::UTF8CodePage utf8CodePageSetter;
 
-  // Get the UTF-8 args.
+  // Convert argv to UTF-8.
   AlususOSAL::Args argsConverter(argc, argv);
 
   Char alususReleaseYear[5];

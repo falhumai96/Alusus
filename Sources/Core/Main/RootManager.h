@@ -49,7 +49,7 @@ class RootManager : public TiObject, public DynamicBinding, public DynamicInterf
 
   private: SharedMap<TiObject> processedFiles;
 
-  private: std::vector<Str> searchPaths;
+  private: std::vector<AlususOSAL::Path> searchPaths;
   private: std::vector<Int> searchPathCounts;
 
   private: Data::Seeker seeker;

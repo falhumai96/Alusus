@@ -67,6 +67,9 @@ static constexpr int (*__dlclose)(void *) = dlclose;
 #if defined(ALUSUS_WIN32)
 #include <cstring>
 static int __setenv(const char *key, const char *value, int overwrite) {
+  if (!key || !value) {
+    return -1;
+  }
   if (!overwrite) {
     return (std::getenv(key) ? 0 : -1);
   }
@@ -74,10 +77,16 @@ static int __setenv(const char *key, const char *value, int overwrite) {
 }
 
 static int __unsetenv(const char *key) {
+  if (!key) {
+    return -1;
+  }
   return (SetEnvironmentVariable(key, NULL) ? 0 : -1);
 }
 
 static int __putenv(char *c_string) {
+  if (!c_string) {
+    return -1;
+  }
   // Get the key.
   size_t key_start = 0;
   size_t key_end = 0;
@@ -245,9 +254,11 @@ thread_local static std::string lastDLError;
 #endif
 
 void *dlopen(const char *__file, int __mode) noexcept(true) {
-
 #if defined(ALUSUS_WIN32)
-
+  if (!__file) {
+    lastDLError = "__file is empty.";
+    return NULL;
+  }
 #if defined(ALUSUS_WIN32_UNICODE)
 
   auto wideStringPath = toWideString(__file);
@@ -332,7 +343,7 @@ struct Path::PathData {
 };
 
 static std::filesystem::path cleanup_path(std::filesystem::path const &path) {
-  auto newPath = std::filesystem::weakly_canonical(path);
+  auto newPath = path.lexically_normal();
   if (!newPath.has_filename()) {
     newPath = newPath.parent_path();
   }
@@ -344,8 +355,7 @@ Path::Path() { m_data = std::make_unique<Path::PathData>(); }
 Path::Path(char *path) {
   m_data = std::make_unique<Path::PathData>();
 #if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(std::string(path));
-  auto osPath = std::filesystem::path(widePath);
+  auto osPath = std::filesystem::path(toWideString(path));
 #else
   auto osPath = std::filesystem::path(std::string(path));
 #endif
@@ -363,32 +373,41 @@ Path::Path(const std::filesystem::path &other) {
 
 Path::~Path() {}
 
+void Path::pathDataReset() {
+  m_data->osPath = std::filesystem::path();
+#if defined(ALUSUS_WIN32)
+  m_data->pathString.reset();
+#endif
+}
+
 Path &Path::operator=(const char *other) {
   std::unique_lock lock(m_data->mx);
+  if (!other || other[0] == '\0') {
+    return *this;
+  }
 #if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(std::string(other));
-  auto osPath = std::filesystem::path(widePath);
+  auto osPath = std::filesystem::path(toWideString(other));
 #else
   auto osPath = std::filesystem::path(std::string(other));
 #endif
   auto newPath = cleanup_path(osPath);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newPath;
   return *this;
 }
 
 Path &Path::operator=(std::string &other) {
   std::unique_lock lock(m_data->mx);
+  if (other.empty()) {
+    return *this;
+  }
 #if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(other);
-  auto osPath = std::filesystem::path(widePath);
+  auto osPath = std::filesystem::path(toWideString(other));
 #else
   auto osPath = std::filesystem::path(other);
 #endif
   auto newPath = cleanup_path(osPath);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newPath;
   return *this;
 }
@@ -396,9 +415,11 @@ Path &Path::operator=(std::string &other) {
 Path &Path::operator=(const Path &other) {
   if (this != &other) {
     std::unique_lock lock(m_data->mx);
+    if (other.m_data->osPath.empty()) {
+      return *this;
+    }
     auto newPath = cleanup_path(other.m_data->osPath);
-    m_data.reset();
-    m_data = std::make_unique<Path::PathData>();
+    pathDataReset();
     m_data->osPath = newPath;
   }
   return *this;
@@ -406,105 +427,119 @@ Path &Path::operator=(const Path &other) {
 
 Path &Path::operator=(const std::filesystem::path &other) {
   std::unique_lock lock(m_data->mx);
+  if (other.empty()) {
+    return *this;
+  }
   auto newPath = cleanup_path(other);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newPath;
   return *this;
 }
 
 Path Path::operator/(const char *other) {
   std::unique_lock lock(m_data->mx);
-#if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(std::string(other));
-  auto inputOSPath = std::filesystem::path(widePath);
-#else
-  auto inputOSPath = std::filesystem::path(std::string(other));
-#endif
   auto osPath = m_data->osPath;
-  osPath /= inputOSPath;
+  if (other && other[0] != '\0') {
+#if defined(ALUSUS_WIN32_UNICODE)
+    auto inputOSPath = std::filesystem::path(toWideString(other));
+#else
+    auto inputOSPath = std::filesystem::path(std::string(other));
+#endif
+    osPath /= inputOSPath;
+  }
   return Path(osPath);
 }
 
 Path Path::operator/(std::string &other) {
   std::unique_lock lock(m_data->mx);
-#if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(other);
-  auto inputOSPath = std::filesystem::path(widePath);
-#else
-  auto inputOSPath = std::filesystem::path(other);
-#endif
   auto osPath = m_data->osPath;
-  osPath /= inputOSPath;
+  if (!other.empty()) {
+#if defined(ALUSUS_WIN32_UNICODE)
+    auto inputOSPath = std::filesystem::path(toWideString(other));
+#else
+    auto inputOSPath = std::filesystem::path(other);
+#endif
+    osPath /= inputOSPath;
+  }
   return Path(osPath);
 }
 
 Path Path::operator/(const Path &other) {
   std::unique_lock lock(m_data->mx);
   auto osPath = m_data->osPath;
-  osPath /= other.m_data->osPath;
+  if (!other.m_data->osPath.empty()) {
+    osPath /= other.m_data->osPath;
+  }
   return Path(osPath);
 }
 
 Path Path::operator/(const std::filesystem::path &other) {
   std::unique_lock lock(m_data->mx);
   auto osPath = m_data->osPath;
-  osPath /= other;
+  if (!other.empty()) {
+    osPath /= other;
+  }
   return Path(osPath);
 }
 
 Path &Path::operator/=(const char *other) {
   std::unique_lock lock(m_data->mx);
+  if (!other || other[0] == '\0') {
+    return *this;
+  }
 #if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(std::string(other));
-  auto inputOSPath = std::filesystem::path(widePath);
+  auto inputOSPath = std::filesystem::path(toWideString(other));
 #else
   auto inputOSPath = std::filesystem::path(std::string(other));
 #endif
   auto newOSPath = m_data->osPath;
   newOSPath /= inputOSPath;
   newOSPath = cleanup_path(newOSPath);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newOSPath;
   return *this;
 }
 
 Path &Path::operator/=(std::string &other) {
   std::unique_lock lock(m_data->mx);
+  if (other.empty()) {
+    return *this;
+  }
 #if defined(ALUSUS_WIN32_UNICODE)
-  auto widePath = nowide::widen(other);
-  auto inputOSPath = std::filesystem::path(widePath);
+  auto inputOSPath = std::filesystem::path(toWideString(other));
 #else
   auto inputOSPath = std::filesystem::path(other);
 #endif
   auto newOSPath = m_data->osPath;
   newOSPath /= inputOSPath;
   newOSPath = cleanup_path(newOSPath);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newOSPath;
   return *this;
 }
 
 Path &Path::operator/=(const Path &other) {
   std::unique_lock lock(m_data->mx);
+  if (other.m_data->osPath.empty()) {
+    return *this;
+  }
   auto newOSPath = m_data->osPath;
   newOSPath /= other.m_data->osPath;
   newOSPath = cleanup_path(newOSPath);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newOSPath;
   return *this;
 }
 
 Path &Path::operator/=(const std::filesystem::path &other) {
   std::unique_lock lock(m_data->mx);
+  if (other.empty()) {
+    return *this;
+  }
   auto newOSPath = m_data->osPath;
   newOSPath /= other;
   newOSPath = cleanup_path(newOSPath);
-  m_data.reset();
-  m_data = std::make_unique<Path::PathData>();
+  pathDataReset();
   m_data->osPath = newOSPath;
   return *this;
 }
@@ -594,19 +629,45 @@ Path Path::canonical() const {
 
 static std::string _getModuleDirectory() {
 #if defined(ALUSUS_WIN32)
-  std::string emptyExePath;
   char *exePath;
+  DWORD bufferLength = MAX_PATH; // Start with a reasonable buffer size.
+  DWORD result = 0;
+
+  // Create a vector to hold the buffer.
+  std::string emptyExePath;
 #if defined(ALUSUS_WIN32_UNICODE)
-  wchar_t *wExePath;
+  std::vector<wchar_t> buffer(bufferLength);
   std::string exePathString;
-  if (_get_wpgmptr(&wExePath) == 0) {
-    exePathString = toUTF8String(wExePath);
-    exePath = (char *)exePathString.c_str();
-  } else
 #else
-  if (_get_pgmptr(&exePath) != 0)
+  std::vector<char> buffer(bufferLength);
 #endif
-    exePath = (char *)emptyExePath.c_str();
+
+  do {
+    // Get the module filename.
+#if defined(ALUSUS_WIN32_UNICODE)
+    result = GetModuleFileNameW(NULL, buffer.data(), bufferLength);
+#else
+    result = GetModuleFileNameA(NULL, buffer.data(), bufferLength);
+#endif
+
+    if (result == 0) {
+      exePath = (char *)emptyExePath.c_str();
+      break;
+    } else if (result == bufferLength) {
+      // The buffer might be too small, resize the vector.
+      bufferLength *= 2; // Double the buffer size.
+      buffer.resize(bufferLength);
+    } else {
+#if defined(ALUSUS_WIN32_UNICODE)
+      exePathString = toUTF8String(buffer.data());
+      exePath = (char *)exePathString.c_str();
+#else
+      exePath = buffer.data();
+#endif
+      break;
+    }
+  } while (true);
+
 #elif defined(ALUSUS_LINUX)
   char exePath[PATH_MAX];
   ssize_t len = ::readlink("/proc/self/exe", exePath, sizeof(exePath));
@@ -780,17 +841,23 @@ int putenv(char *c_string) {
 std::vector<std::string> constructShlibNames(char const *libname) {
   std::vector<std::string> libnames;
 
+  std::string emptyString;
+  char const *inputLibname = libname;
+  if (!inputLibname) {
+    inputLibname = emptyString.c_str();
+  }
+
 #if defined(ALUSUS_USE_LOGS)
 
   // Push debug names.
 
 #if defined(ALUSUS_WIN32)
-  libnames.push_back(std::string("lib") + libname + ".dbg.dll");
-  libnames.push_back(std::string(libname) + ".dbg.dll");
+  libnames.push_back(std::string("lib") + inputLibname + ".dbg.dll");
+  libnames.push_back(std::string(inputLibname) + ".dbg.dll");
 #elif defined(ALUSUS_APPLE)
-  libnames.push_back(std::string("lib") + libname + ".dbg.dylib");
+  libnames.push_back(std::string("lib") + inputLibname + ".dbg.dylib");
 #else
-  libnames.push_back(std::string("lib") + libname + ".dbg.so");
+  libnames.push_back(std::string("lib") + inputLibname + ".dbg.so");
 #endif
 
 #endif
@@ -798,12 +865,12 @@ std::vector<std::string> constructShlibNames(char const *libname) {
   // Push release names.
 
 #if defined(ALUSUS_WIN32)
-  libnames.push_back(std::string("lib") + libname + ".dll");
-  libnames.push_back(std::string(libname) + ".dll");
+  libnames.push_back(std::string("lib") + inputLibname + ".dll");
+  libnames.push_back(std::string(inputLibname) + ".dll");
 #elif defined(ALUSUS_APPLE)
-  libnames.push_back(std::string("lib") + libname + ".dylib");
+  libnames.push_back(std::string("lib") + inputLibname + ".dylib");
 #else
-  libnames.push_back(std::string("lib") + libname + ".so");
+  libnames.push_back(std::string("lib") + inputLibname + ".so");
 #endif
 
   return libnames;
@@ -830,7 +897,7 @@ std::vector<Path> parsePathVariable(char const *pathVar) {
   std::vector<Path> paths;
   std::string currPath;
 
-  if (!pathVar) {
+  if (!pathVar || pathVar[0] == '\0') {
     return paths;
   }
 
