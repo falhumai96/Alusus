@@ -7,6 +7,9 @@
 project(AlususSpp)
 cmake_minimum_required(VERSION 3.20.0)
 
+# Find LLVM config.
+find_package(LLVM CONFIG REQUIRED)
+
 # Header and library files paths for LLVM
 include_directories("${LLVM_INCLUDE_DIRS}")
 link_directories("${LLVM_LIBRARY_DIRS}")
@@ -83,13 +86,9 @@ if(ALUSUS_USE_RPATH)
   endif()
 endif()
 target_precompile_headers(AlususSpp PRIVATE "spp.h")
-target_include_directories(AlususSpp PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(AlususSpp PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
 
 # Finally, we link LLVM and AlususCore libraries to our library.
-target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
+target_link_libraries(AlususSpp PRIVATE ${REQ_LLVM_LIBRARIES} ${REQ_SYSTEM_LIBRARIES} AlususSrlLib AlususCoreLib AlususStorage AlususOSAL)
 
 # Prevent the exporting of LLVM symbols
 if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

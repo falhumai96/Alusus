@@ -44,6 +44,7 @@ class LibraryManager : public TiObject
 
   private: std::vector<Entry> entries;
   private: RootManager *root;
+  private: AutoAPRPool dsoHandlesPool;
 
 
   //============================================================================

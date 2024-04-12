@@ -10,8 +10,8 @@
  */
 //==============================================================================
 
-#include "AlususDefs.h"
 #include "core.h"
+#include "OSAL.hpp"
 
 #ifdef ALUSUS_USE_LOGS
 

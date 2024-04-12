@@ -8,9 +8,11 @@
  * For details on usage and copying conditions read the full license in the
  * accompanying license file or at <https://alusus.org/license.html>.
  */
-//==============================================================================
+ //==============================================================================
 
-#include "AlususDefs.h"
+#include <iostream>
+
+#include "OSAL.hpp"
 #include "spp.h"
 
 namespace Spp::LlvmCodeGen
@@ -53,10 +55,10 @@ void JitBuildTarget::addLlvmModule(std::unique_ptr<llvm::Module> module)
   #ifdef ALUSUS_USE_LOGS
     if (Core::Basic::Logger::getFilter() & Spp::LogLevel::LLVMCODEGEN_IR) {
       // Dump the module to be compiled.
-      outStream << S(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-      llvm::raw_os_ostream ostream(outStream);
+      std::cout << S(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+      llvm::raw_os_ostream ostream(std::cout);
       llvm::createPrintModulePass(ostream)->runOnModule(*(module));
-      outStream << S("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+      std::cout << S("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
     }
   #endif
 

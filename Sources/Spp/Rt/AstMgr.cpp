@@ -9,6 +9,7 @@
  */
 //==============================================================================
 
+#include "OSAL.hpp"
 #include "spp.h"
 
 namespace Spp::Rt
@@ -331,6 +332,17 @@ SharedPtr<TiObject> AstMgr::_cloneAst(TiObject *self, TiObject *astNodeToCopy, T
 
 void AstMgr::_dumpData(TiObject *self, TiObject *obj)
 {
+  // Get the output stream.
+  AutoAPRPool pool;
+  apr_file_t* cStdoutFile;
+  apr_status_t rv = apr_file_open_stdout(&cStdoutFile, pool.getPool());
+  if (rv != APR_SUCCESS) {
+    throw EXCEPTION(GenericException, S("Error opening APR stdout."));
+  }
+  AutoAPRFile stdoutFile(cStdoutFile);
+  APRFilebuf stdoutBuf(stdoutFile.getFile());
+  std::ostream outStream(&stdoutBuf);
+
   Core::Data::dumpData(outStream, obj, 0);
 }
 

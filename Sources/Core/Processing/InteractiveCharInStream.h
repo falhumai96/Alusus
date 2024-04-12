@@ -25,6 +25,8 @@ class InteractiveCharInStream : public TiObject, public CharInStreaming
     INHERITANCE_INTERFACES(CharInStreaming)
   ));
 
+  private: std::istream& inStream;
+  private: std::ostream& outStream;
 
   //============================================================================
   // Member Variables
@@ -35,8 +37,7 @@ class InteractiveCharInStream : public TiObject, public CharInStreaming
   //============================================================================
   // Constructors & Destructor
 
-  public: InteractiveCharInStream() : lineNumber(1)
-  {
+  public: InteractiveCharInStream(std::istream& inStream, std::ostream& outStream) : inStream(inStream), outStream(outStream), lineNumber(1) {
     outStream << this->lineNumber << S("> ");
   }
 

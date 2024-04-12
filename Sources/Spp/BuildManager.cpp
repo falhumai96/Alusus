@@ -12,6 +12,8 @@
 
 #include "spp.h"
 
+#include <iostream>
+
 namespace Spp
 {
 
@@ -456,15 +458,16 @@ void BuildManager::_dumpLlvmIrForElement(TiObject *self, TiObject *element)
   Str ir = buildSession->getBuildTarget().s_cast<LlvmCodeGen::OfflineBuildTarget>()->generateLlvmIr(
     &globalCtorNames, &globalDtorNames
   );
+
   if (result) {
-    outStream << S("-------------------- Generated LLVM IR ---------------------\n");
-    outStream << ir;
-    outStream << S("------------------------------------------------------------\n");
+    std::cout << S("-------------------- Generated LLVM IR ---------------------\n");
+    std::cout << ir;
+    std::cout << S("------------------------------------------------------------\n");
   } else {
-    outStream << S("Build Failed...\n");
-    outStream << S("--------------------- Partial LLVM IR ----------------------\n");
-    outStream << ir;
-    outStream << S("------------------------------------------------------------\n");
+    std::cout << S("Build Failed...\n");
+    std::cout << S("--------------------- Partial LLVM IR ----------------------\n");
+    std::cout << ir;
+    std::cout << S("------------------------------------------------------------\n");
   }
 
   buildMgr->resetBuild(buildSession.get());

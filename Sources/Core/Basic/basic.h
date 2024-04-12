@@ -14,7 +14,7 @@
 #ifndef CORE_BASIC_BASIC_H
 #define CORE_BASIC_BASIC_H
 
-#include "AlususDefs.h"
+#include "OSAL.hpp"
 
 namespace Core::Basic
 {
@@ -617,27 +617,6 @@ SrdRef<T> newSrdObj(ARGS... args) {
 
 //==============================================================================
 // Global Variable Definitions
-
-/**
- * @brief A reference to AlususOSAL::getCout() to use to output to the console.
- * @ingroup core_basic
- *
- * This should be used to output to the console instead of directly using
- * AlususOSAL::getCout(), in order to minimize the needed changes in case we
- * needed to support wide characters in the output stream.
- */
-extern std::ostream &outStream;
-
-
-/**
- * @brief A reference to AlususOSAL::getCin() to use to input from the console.
- * @ingroup core_basic
- *
- * This should be used to input from the console instead of directly using
- * AlususOSAL::getCin(), in order to minimize the needed changes in case we
- * needed to support wide characters in the input stream.
- */
-extern std::istream &inStream;
 
 
 //==============================================================================

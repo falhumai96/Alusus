@@ -13,8 +13,6 @@
 #ifndef CORE_MAIN_ROOTMANAGER_H
 #define CORE_MAIN_ROOTMANAGER_H
 
-#include "AlususOSAL.hpp"
-
 namespace Core::Main
 {
 
@@ -49,7 +47,7 @@ class RootManager : public TiObject, public DynamicBinding, public DynamicInterf
 
   private: SharedMap<TiObject> processedFiles;
 
-  private: std::vector<AlususOSAL::Path> searchPaths;
+  private: std::vector<Str> searchPaths;
   private: std::vector<Int> searchPathCounts;
 
   private: Data::Seeker seeker;
@@ -87,7 +85,9 @@ class RootManager : public TiObject, public DynamicBinding, public DynamicInterf
   //============================================================================
   // Constructors / Destructor
 
-  public: RootManager();
+  private: virtual void computeCoreBinPath(const Char *argvBinPath, const Char *cwd, Str &resultPath);
+
+  public: RootManager(Int count, Char const* const* args);
 
   public: virtual ~RootManager()
   {
@@ -136,19 +136,31 @@ class RootManager : public TiObject, public DynamicBinding, public DynamicInterf
 
   public: virtual SharedPtr<TiObject> processFile(Char const *filename, Bool allowReprocess = false);
 
-  private: virtual SharedPtr<TiObject> _processFile(AlususOSAL::Path const &fullPath, Bool allowReprocess = false);
+  private: virtual SharedPtr<TiObject> _processSourceFile(Char const *fullPath, Bool allowReprocess = false);
 
   public: virtual SharedPtr<TiObject> processStream(Processing::CharInStreaming *is, Char const *streamName);
 
   public: virtual Bool tryImportFile(Char const *filename, Str &errorDetails);
 
-  private: virtual void pushSearchPath(AlususOSAL::Path const &filename);
+  private: virtual Bool isShlib(Char const *filename);
 
-  private: virtual void popSearchPath(AlususOSAL::Path const &filename);
+  private: virtual Bool isAlususFile(Char const *filename);
 
-  private: virtual Bool findFile(AlususOSAL::Path const &filename, AlususOSAL::Path &resultFilename);
+  private: virtual Str joinPaths(Char const *path1, Char const *path2);
 
-  private: virtual Bool tryFileName(AlususOSAL::Path const &filename, AlususOSAL::Path &resultFilename);
+  private: virtual Str getParentDirectory(Char const *path);
+
+  private: virtual Str normalizePath(Char const *path);
+
+  private: virtual Str getCurrentWorkingDirectory(void *rv = nullptr);
+
+  private: virtual void pushSearchPath(Str const &path);
+
+  private: virtual void popSearchPath(Str const &path);
+
+  private: virtual Bool findSourceFile(Char const *filename, Str &resultFilename);
+
+  private: virtual Bool trySourceFileName(Char const *filename, Str &resultFilename);
 
   public: void resetMinNoticeSeverityEncountered()
   {
@@ -168,12 +180,6 @@ class RootManager : public TiObject, public DynamicBinding, public DynamicInterf
   public: Bool isInteractive() const
   {
     return this->interactive;
-  }
-
-  public: void setProcessArgInfo(Int count, Char const *const *args)
-  {
-    this->processArgCount = count;
-    this->processArgs = args;
   }
 
   public: Int getProcessArgCount() const

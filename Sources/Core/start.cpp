@@ -11,11 +11,71 @@
 //==============================================================================
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "core.h"
-#include "AlususDefs.h"
-#include "AlususOSAL.hpp"
+#include "OSAL.hpp"
+
+
+Str computeL18nDictionaryPath(const Char *argvBinPath)
+{
+  // TODO: Properly report OS/APR errors.
+
+  // Follow argvBinPath symlink.
+  int error;
+  std::string resolvedPath = followSymlink(argvBinPath, &error);
+  if (error) {
+    throw EXCEPTION(GenericException, S("Error following symlink."));
+  }
+
+  // Get CWD.
+  AutoAPRPool pool;
+  Char* cwd;
+  apr_status_t rv = apr_filepath_get(&cwd, APR_FILEPATH_NATIVE, pool.getPool());
+  if (rv != APR_SUCCESS) {
+    throw EXCEPTION(GenericException, S("Could not get CWD."));
+  }
+
+  // Get abs path of followed symlink of argvBinPath.
+  size_t neededLength = cwk_path_get_absolute(cwd, resolvedPath.c_str(), nullptr, 0) + 1;
+  std::vector<Char> absolutePathBuffer(neededLength, 0);
+  cwk_path_get_absolute(cwd, resolvedPath.c_str(), (Char*)absolutePathBuffer.data(), absolutePathBuffer.size());
+
+  // Get "Notices_L18n" path.
+  Str l18nPath;
+  {
+    // Get the dirname of the abs path.
+    cwk_path_get_dirname(absolutePathBuffer.data(), &neededLength);
+    Str dirname;
+    if (neededLength > 0) {
+      dirname = Str(absolutePathBuffer.data(), neededLength);
+    } else {
+      throw EXCEPTION(GenericException, S("Could not get binary directory."));
+    }
+
+    // Get the install path.
+    cwk_path_get_dirname(dirname.getBuf(), &neededLength);
+    Str installPath;
+    if (neededLength > 0) {
+      installPath = Str(dirname.getBuf(), neededLength);
+    }
+
+    // Join with "Notices_L18n".
+    neededLength = cwk_path_join(installPath.getBuf(), "Notices_L18n", nullptr, 0) + 1;
+    std::vector<Char> joinedPathBuffer(neededLength, 0);
+    cwk_path_join(installPath.getBuf(), "Notices_L18n", (Char*)joinedPathBuffer.data(), joinedPathBuffer.size());
+
+    // Normalize the path.
+    neededLength = cwk_path_normalize(joinedPathBuffer.data(), nullptr, 0) + 1;
+    std::vector<Char> normalizedPathBuffer(neededLength, 0);
+    cwk_path_normalize(joinedPathBuffer.data(), (Char*)normalizedPathBuffer.data(), normalizedPathBuffer.size());
+
+    l18nPath = normalizedPathBuffer.data();
+  }
+
+  return l18nPath;
+}
 
 /**
  * @defgroup main Main
@@ -23,26 +83,6 @@
  */
 
 using namespace Core;
-
-
-/**
- * @brief Get the system language code from env vars.
- * @ingroup main
- * This checks the value in LANGUAGE env var if available. If not it checks the
- * value in LANG env var.
- */
-Str getSystemLanguage()
-{
-  Char const *langEnv = AlususOSAL::getenv(S("LANGUAGE"));
-  if (langEnv == 0 || getStrLen(langEnv) == 0)
-    langEnv = AlususOSAL::getenv(S("LANG"));
-  if (langEnv == 0 || getStrLen(langEnv) == 0)
-    langEnv = S("en");
-
-  Str lang;
-  lang.assign(langEnv, 2);
-  return lang;
-}
 
 /**
  * @brief The entry point of the program.
@@ -52,11 +92,46 @@ Str getSystemLanguage()
  */
 int main(int argCount, char **args)
 {
-  // Set the codepage.
-  AlususOSAL::UTF8CodePage utf8CodePageSetter;
+  // Get system language.
+  Str lang = getSystemLanguage();
 
-  // Convert args to UTF-8.
-  AlususOSAL::Args argsConverter(argCount, args);
+  // Set the UTF-8 codepage.
+  setUTF8CP();
+  std::atexit(restoreOriginalCP);
+
+  apr_status_t rv;
+
+  // Initialize APR.
+  rv = apr_app_initialize(&argCount, (const char* const**)&args, NULL);
+  if (rv != APR_SUCCESS) {
+    if (lang == "ar") {
+      fprintf(stderr, "خطأ (%d) في تهيئة APR" APR_EOL_STR, APR_TO_OS_ERROR(rv));
+    }
+    else {
+      fprintf(stderr, "Error (%d) initializing APR" APR_EOL_STR, APR_TO_OS_ERROR(rv));
+    }
+    return 1;
+  }
+  std::atexit(apr_terminate);
+
+  // Main APR pool.
+  AutoAPRPool mainPool;
+
+  // Get the output stream.
+  apr_file_t* cStdoutFile;
+  rv = apr_file_open_stdout(&cStdoutFile, mainPool.getPool());
+  if (rv != APR_SUCCESS) {
+    if (lang == "ar") {
+      fprintf(stderr, "خطأ (%d) في فتح مخرج الإخراج الأساسي لـ APR" APR_EOL_STR, APR_TO_OS_ERROR(rv));
+    }
+    else {
+      fprintf(stderr, "Error (%d) opening APR stdout" APR_EOL_STR, APR_TO_OS_ERROR(rv));
+    }
+    return 1;
+  }
+  AutoAPRFile stdoutFile(cStdoutFile);
+  APRFilebuf stdoutBuf(stdoutFile.getFile());
+  std::ostream outStream(&stdoutBuf);
 
   Bool help = false;
   Bool interactive = false;
@@ -89,10 +164,10 @@ int main(int argCount, char **args)
     }
   }
 
-  auto lang = getSystemLanguage();
-  if (lang == S("ar") || lang == S("en")) {
+  Str l18nPath = computeL18nDictionaryPath(args[0]);
+  if (lang == "ar" || lang == "en") {
     // TODO: Support other locales.
-    Core::Notices::L18nDictionary::getSingleton()->initialize(lang);
+    Core::Notices::L18nDictionary::getSingleton()->initialize(lang, l18nPath.getBuf());
   }
 
   // We'll show help if now source file is given.
@@ -105,69 +180,71 @@ int main(int argCount, char **args)
     copyStr(ALUSUS_HIJRI_RELEASE_DATE, alususHijriReleaseYear, 4);
     alususReleaseYear[4] = alususHijriReleaseYear[4] = 0;
     // Check if the command line was in English by detecting if the first character is ASCII.
-    if (lang == S("ar")) {
+    if (lang == "ar") {
       // Write Arabic help.
-      outStream << S("لغة الأسُس\n"
-                     "الإصدار (" ALUSUS_VERSION ALUSUS_REVISION ")\n(" ALUSUS_RELEASE_DATE " م)\n(" ALUSUS_HIJRI_RELEASE_DATE " هـ)\n"
-                     "جميع الحقوق محفوظة لـ سرمد خالد عبدالله (" << alususReleaseYear << " م) \\ (" << alususHijriReleaseYear << " هـ)\n\n");
-      outStream << S("نُشر هذا البرنامج برخصة الأسُس العامة، الإصدار 1.0، والمتوفرة على الرابط أدناه.\n"
-                     "يرجى قراءة الرخصة قبل استخدام البرنامج. استخدامك لهذا البرنامج أو أي من الملفات\n"
-                     "المرفقة معه إقرار منك أنك قرأت هذه الرخصة ووافقت على جميع فقراتها.\n");
-      outStream << S("\nAlusus Public License: <https://alusus.org/ar/license.html>\n");
-      outStream << S("\nطريقة الاستخدام:\n");
-      outStream << S("الأسُس [<خيارات القلب>] <الشفرة المصدرية> [<خيارات البرنامج>]\n");
-      outStream << S("الشفرة المصدرية = اسم الملف الحاوي على الشفرة المصدرية\n");
-      outStream << S("alusus [<Core options>] <source> [<program options>]\n");
-      outStream << S("source = filename.\n");
-      outStream << S("\nالخيارات:\n");
-      outStream << S("\tتنفيذ بشكل تفاعلي:\n");
-      outStream << S("\t\t--تفاعلي\n");
-      outStream << S("\t\t-ت\n");
-      outStream << S("\t\t--interactive\n");
-      outStream << S("\t\t-i\n");
-      outStream << S("\tالقاء شجرة AST عند الانتهاء:\n");
-      outStream << S("\t\t--شجرة\n");
-      outStream << S("\t\t--dump\n");
+      outStream << "لغة الأسُس" << APR_EOL_STR <<
+        "الإصدار (" << ALUSUS_VERSION ALUSUS_REVISION << ")" << APR_EOL_STR << "(" << ALUSUS_RELEASE_DATE << " م)" << APR_EOL_STR << "(" << ALUSUS_HIJRI_RELEASE_DATE << " هـ)" << APR_EOL_STR <<
+        "جميع الحقوق محفوظة لـ سرمد خالد عبدالله (" << alususReleaseYear << " م) \\ (" << alususHijriReleaseYear << " هـ)" << APR_EOL_STR << APR_EOL_STR;
+      outStream << "نُشر هذا البرنامج برخصة الأسُس العامة، الإصدار 1.0، والمتوفرة على الرابط أدناه." << APR_EOL_STR <<
+        "يرجى قراءة الرخصة قبل استخدام البرنامج. استخدامك لهذا البرنامج أو أي من الملفات" << APR_EOL_STR <<
+        "المرفقة معه إقرار منك أنك قرأت هذه الرخصة ووافقت على جميع فقراتها." << APR_EOL_STR;
+      outStream << APR_EOL_STR << "Alusus Public License: <https://alusus.org/ar/license.html>" << APR_EOL_STR;
+      outStream << APR_EOL_STR << "طريقة الاستخدام:" << APR_EOL_STR;
+      outStream << "الأسُس [<خيارات القلب>] <الشفرة المصدرية> [<خيارات البرنامج>]" << APR_EOL_STR;
+      outStream << "الشفرة المصدرية = اسم الملف الحاوي على الشفرة المصدرية" << APR_EOL_STR;
+      outStream << "alusus [<Core options>] <source> [<program options>]" << APR_EOL_STR;
+      outStream << "source = filename." << APR_EOL_STR;
+      outStream << APR_EOL_STR << "الخيارات:" << APR_EOL_STR;
+      outStream << "\tتنفيذ بشكل تفاعلي:" << APR_EOL_STR;
+      outStream << "\t\t--تفاعلي" << APR_EOL_STR;
+      outStream << "\t\t-ت" << APR_EOL_STR;
+      outStream << "\t\t--interactive" << APR_EOL_STR;
+      outStream << "\t\t-i" << APR_EOL_STR;
+      outStream << "\tالقاء شجرة AST عند الانتهاء:" << APR_EOL_STR;
+      outStream << "\t\t--شجرة" << APR_EOL_STR;
+      outStream << "\t\t--dump" << APR_EOL_STR;
       #if defined(ALUSUS_USE_LOGS)
-        outStream << S("\tالتحكم بمستوى التدوين (قيمة من 6 بتات):\n");
-        outStream << S("\t\t--تدوين\n");
-        outStream << S("\t\t--log\n");
+      outStream << "\tالتحكم بمستوى التدوين (قيمة من 6 بتات):" << APR_EOL_STR;
+      outStream << "\t\t--تدوين" << APR_EOL_STR;
+      outStream << "\t\t--log" << APR_EOL_STR;
       #endif
-    } else {
+    }
+    else {
       // Write English help.
-      outStream << S("Alusus Language\n"
-                     "Version " ALUSUS_VERSION ALUSUS_REVISION " (" ALUSUS_RELEASE_DATE ")\n"
-                     "Copyright (C) " << alususReleaseYear << " Sarmad Khalid Abdullah\n\n");
-      outStream << S("This software is released under Alusus Public License, Version 1.0.\n"
-                     "For details on usage and copying conditions read the full license at\n"
-                     "<https://alusus.org/license.html>. By using this software you acknowledge\n"
-                     "that you have read the terms in the license and agree with and accept all such\n"
-                     "terms.\n\n");
-      outStream << S("Usage: alusus [<Core options>] <source> [<program options>]\n");
-      outStream << S("source = filename.\n");
-      outStream << S("\nOptions:\n");
-      outStream << S("\t--interactive, -i  Run in interactive mode.\n");
-      outStream << S("\t--dump  Tells the Core to dump the resulting AST tree.\n");
+      outStream << "Alusus Language" APR_EOL_STR
+        "Version " ALUSUS_VERSION ALUSUS_REVISION " (" ALUSUS_RELEASE_DATE ")" APR_EOL_STR
+        "Copyright (C) " << alususReleaseYear << " Sarmad Khalid Abdullah" APR_EOL_STR APR_EOL_STR;
+      outStream << "This software is released under Alusus Public License, Version 1.0." APR_EOL_STR
+        "For details on usage and copying conditions read the full license at" APR_EOL_STR
+        "<https://alusus.org/license.html>. By using this software you acknowledge" APR_EOL_STR
+        "that you have read the terms in the license and agree with and accept all such" APR_EOL_STR
+        "terms." APR_EOL_STR APR_EOL_STR;
+      outStream << "Usage: alusus [<Core options>] <source> [<program options>]" APR_EOL_STR;
+      outStream << "source = filename." APR_EOL_STR;
+      outStream << APR_EOL_STR "Options:" APR_EOL_STR;
+      outStream << "\t--interactive, -i  Run in interactive mode." APR_EOL_STR;
+      outStream << "\t--dump  Tells the Core to dump the resulting AST tree." APR_EOL_STR;
       #if defined(ALUSUS_USE_LOGS)
-        outStream << S("\t--log  A 6 bit value to control the level of details of the log.\n");
+      outStream << "\t--log  A 6 bit value to control the level of details of the log." APR_EOL_STR;
       #endif
     }
     return EXIT_SUCCESS;
-  } else if (interactive) {
+  }
+  else if (interactive) {
     // Run in interactive mode.
-    if (lang == S("ar")) {
-      outStream << S("تنفيذ بشكل تفاعلي.\n");
-      outStream << S("إضغط على CTRL+C للخروج.\n\n");
-    } else {
-      outStream << S("Running in interactive mode.\n");
-      outStream << S("Press CTRL+C to exit.\n\n");
+    if (lang == "ar") {
+      outStream << "تنفيذ بشكل تفاعلي." APR_EOL_STR;
+      outStream << "إضغط على CTRL+C للخروج." APR_EOL_STR APR_EOL_STR;
+    }
+    else {
+      outStream << "Running in interactive mode." APR_EOL_STR;
+      outStream << "Press CTRL+C to exit." APR_EOL_STR APR_EOL_STR;
     }
 
     try {
       // Prepare the root object;
-      Main::RootManager root;
+      Main::RootManager root(argCount, args);
       root.setInteractive(true);
-      root.setProcessArgInfo(argCount, args);
       root.setLanguage(lang);
       Slot<void, SharedPtr<Notices::Notice> const&> noticeSlot(
         [](SharedPtr<Notices::Notice> const &notice)->void
@@ -177,11 +254,27 @@ int main(int argCount, char **args)
       );
       root.noticeSignal.connect(noticeSlot);
 
+      // Get the input stream.
+      apr_file_t* cStdinFile;
+      rv = apr_file_open_stdin(&cStdinFile, mainPool.getPool());
+      if (rv != APR_SUCCESS) {
+        if (lang == "ar") {
+          fprintf(stderr, "خطأ (%d) في فتح مخرج الإدخال الأساسي لـ APR" APR_EOL_STR, APR_TO_OS_ERROR(rv));
+        }
+        else {
+          fprintf(stderr, "Error (%d) opening APR stdin" APR_EOL_STR, APR_TO_OS_ERROR(rv));
+        }
+        return 1;
+      }
+      AutoAPRFile stdinFile(cStdinFile);
+      APRFilebuf stdinBuf(stdinFile.getFile());
+      std::istream inStream(&stdinBuf);
+
       // Parse the standard input stream.
-      Processing::InteractiveCharInStream charStream;
+      Processing::InteractiveCharInStream charStream(inStream, outStream);
       root.processStream(&charStream, S("user input"));
     } catch (Exception &e) {
-      outStream << e.getVerboseErrorMessage() << NEW_LINE;
+      outStream << e.getVerboseErrorMessage() << APR_EOL_STR;
       return EXIT_FAILURE;
     } catch (Int v) {
       return v;
@@ -191,8 +284,7 @@ int main(int argCount, char **args)
     // Parse the provided source file.
     try {
       // Prepare the root object;
-      Main::RootManager root;
-      root.setProcessArgInfo(argCount, args);
+      Main::RootManager root(argCount, args);
       root.setLanguage(lang);
       Slot<void, SharedPtr<Notices::Notice> const&> noticeSlot(
         [](SharedPtr<Notices::Notice> const &notice)->void
@@ -208,28 +300,28 @@ int main(int argCount, char **args)
 
       // Print the parsed data.
       if (dump) {
-        outStream << NEW_LINE << S("-- BUILD COMPLETE --") << NEW_LINE << NEW_LINE <<
-                S("Build Results:") << NEW_LINE << NEW_LINE;
+        outStream << APR_EOL_STR << S("-- BUILD COMPLETE --") << APR_EOL_STR << APR_EOL_STR <<
+          S("Build Results:") << APR_EOL_STR << APR_EOL_STR;
         Data::dumpData(outStream, ptr.get(), 0);
-        outStream << NEW_LINE;
+        outStream << APR_EOL_STR;
       }
     } catch (FileException &e) {
       if (e.getComment() == S("invalid")) {
-        if (lang == S("ar")) {
-          outStream << S("صنف الملف غير صالح: ") << e.getFileName() << NEW_LINE;
+        if (lang == "ar") {
+          outStream << S("صنف الملف غير صالح: ") << e.getFileName() << APR_EOL_STR;
         } else {
-          outStream << S("Invalid file type: ") << e.getFileName() << NEW_LINE;
+          outStream << S("Invalid file type: ") << e.getFileName() << APR_EOL_STR;
         }
       } else {
-        if (lang == S("ar")) {
-          outStream << S("الملف مفقود: ") << e.getFileName() << NEW_LINE;
+        if (lang == "ar") {
+          outStream << S("الملف مفقود: ") << e.getFileName() << APR_EOL_STR;
         } else {
-          outStream << S("File not found: ") << e.getFileName() << NEW_LINE;
+          outStream << S("File not found: ") << e.getFileName() << APR_EOL_STR;
         }
       }
       return EXIT_FAILURE;
     } catch (Exception &e) {
-      outStream << e.getVerboseErrorMessage() << NEW_LINE;
+      outStream << e.getVerboseErrorMessage() << APR_EOL_STR;
       return EXIT_FAILURE;
     } catch (Int v) {
       return v;

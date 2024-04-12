@@ -79,19 +79,9 @@ class Lexer : public TiObject
   private: Word nextStateCount = 0;
   private: LexerState **recycledStates = 0;
   private: Word recycledStateCount = 0;
+  private: Word currentWChar = 0;
+  private: Word remainingChars = 0;
 
-  /**
-   * @brief A temporary buffer used to buffer byte characters for conversion.
-   * This buffer is used to buffer the received byte characters when multi
-   * byte sequences are received.
-   */
-  private: Char tempByteCharBuffer[4];
-
-  /**
-   * @brief Current count of bytes in tempByteCharBuffer.
-   * @sa tempByteCharBuffer
-   */
-  private: Word tempByteCharCount;
 
   /**
    * @brief The buffer of input characters.
@@ -163,7 +153,6 @@ class Lexer : public TiObject
 
   public: Lexer() :
     errorBuffer(S(""), 0),
-    tempByteCharCount(0),
     currentProcessingIndex(0),
     currentTokenClamped(false)
   {

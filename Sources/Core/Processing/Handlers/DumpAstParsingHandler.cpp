@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "OSAL.hpp"
 #include "core.h"
 
 namespace Core::Processing::Handlers
@@ -22,6 +23,17 @@ using namespace Core::Data;
 
 void DumpAstParsingHandler::onProdEnd(Parser *parser, ParserState *state)
 {
+  // Get the output stream.
+  AutoAPRPool pool;
+  apr_file_t* cStdoutFile;
+  apr_status_t rv = apr_file_open_stdout(&cStdoutFile, pool.getPool());
+  if (rv != APR_SUCCESS) {
+    throw EXCEPTION(GenericException, S("Error opening APR stdout."));
+  }
+  AutoAPRFile stdoutFile(cStdoutFile);
+  APRFilebuf stdoutBuf(stdoutFile.getFile());
+  std::ostream stdoutStream(&stdoutBuf);
+
   using SeekVerb = Data::Seeker::Verb;
 
   auto data = state->getData().ti_cast_get<Containing<TiObject>>()->getElement(1);
@@ -37,12 +49,12 @@ void DumpAstParsingHandler::onProdEnd(Parser *parser, ParserState *state)
     } else {
       node->setOwner(parser->getRootScope().get());
       this->rootManager->getSeeker()->foreach(data, state->getDataStack(),
-        [=, &found](TiInt action, TiObject *obj)->SeekVerb
+        [=, &stdoutStream, &found](TiInt action, TiObject *obj)->SeekVerb
         {
           if (action == Core::Data::Seeker::Action::TARGET_MATCH && obj != 0) {
-            outStream << S("------------------ Parsed Data Dump ------------------\n");
-            dumpData(outStream, obj, 0);
-            outStream << S("\n------------------------------------------------------\n");
+            stdoutStream << "------------------ Parsed Data Dump ------------------" << APR_EOL_STR;
+            dumpData(stdoutStream, obj, 0);
+            stdoutStream << APR_EOL_STR << "------------------------------------------------------" << APR_EOL_STR;
             found = true;
           }
           return SeekVerb::MOVE;

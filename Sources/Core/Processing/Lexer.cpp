@@ -10,7 +10,7 @@
  */
 //==============================================================================
 
-#include "AlususDefs.h"
+#include "OSAL.hpp"
 #include "core.h"
 
 namespace Core::Processing
@@ -64,22 +64,76 @@ void Lexer::initialize(SharedPtr<Data::Ast::Scope> rootScope)
  */
 void Lexer::handleNewChar(Char inputChar, Data::SourceLocationRecord &sourceLocation)
 {
-  // Buffer the input sequence until it can be converted to wide characters.
-  this->tempByteCharBuffer[this->tempByteCharCount] = inputChar;
-  ++this->tempByteCharCount;
-  WChar wideCharBuffer[1];
-  // Try converting to wide characters.
-  Int processedIn, processedOut;
-  convertStr(this->tempByteCharBuffer, this->tempByteCharCount, wideCharBuffer, 1, processedIn, processedOut);
-  if (processedOut != 0) {
-    // Conversion was successful. Send converted character to the buffer.
-    this->pushChar(wideCharBuffer[0], sourceLocation);
-    this->processBuffer();
-    computeNextCharPosition(wideCharBuffer[0], sourceLocation.line, sourceLocation.column);
-    this->tempByteCharCount = 0;
-  } else if (this->tempByteCharCount == 4) {
-    throw EXCEPTION(GenericException,
-                    S("Invalid input character sequence. Sequence could not be converted to wide characters."));
+  Byte byte = (Byte)(inputChar);
+  if (remainingChars == 0) {
+    // Determine the length of the UTF-8 character
+    if ((byte & 0x80) == 0) { // 0xxxxxxx
+      this->pushChar((WChar)byte, sourceLocation);
+      this->processBuffer();
+      computeNextCharPosition((WChar)byte, sourceLocation.line, sourceLocation.column);
+    }
+    else if ((byte & 0xE0) == 0xC0) { // 110xxxxx
+      currentWChar = byte & 0x1F;
+      remainingChars = 1;
+    }
+    else if ((byte & 0xF0) == 0xE0) { // 1110xxxx
+      currentWChar = byte & 0x0F;
+      remainingChars = 2;
+    }
+    else if ((byte & 0xF8) == 0xF0) { // 11110xxx
+      currentWChar = byte & 0x07;
+      remainingChars = 3;
+    }
+    else {
+      // Invalid first byte, throw an exception or handle error
+      throw EXCEPTION(GenericException,
+        S("Invalid input character sequence. Sequence could not be converted to wide characters."));
+    }
+  }
+  else {
+    // Process the subsequent bytes of the UTF-8 character
+    if ((byte & 0xC0) == 0x80) { // 10xxxxxx
+      currentWChar = (currentWChar << 6) | (byte & 0x3F);
+      --remainingChars;
+
+      // If this was the last byte of the character, convert and append it to the string
+      if (remainingChars == 0) {
+        if constexpr (sizeof(WChar) == 2) {
+          // Handle surrogate pairs for UTF-16 (16-bit WChar)
+          if (currentWChar <= 0xFFFF) {
+            // Character fits in a single WChar
+            this->pushChar((WChar)currentWChar, sourceLocation);
+            this->processBuffer();
+            computeNextCharPosition(currentWChar, sourceLocation.line, sourceLocation.column);
+          }
+          else {
+            // Convert to surrogate pair
+            currentWChar -= 0x10000;
+            WChar firstChar = (WChar)((currentWChar >> 10) + 0xD800);
+            WChar secondChar = (WChar)((currentWChar & 0x3FF) + 0xDC00);
+
+            this->pushChar(firstChar, sourceLocation); // High surrogate
+            this->processBuffer();
+            computeNextCharPosition(firstChar, sourceLocation.line, sourceLocation.column);
+            this->pushChar(secondChar, sourceLocation); // Low surrogate
+            this->processBuffer();
+            computeNextCharPosition(secondChar, sourceLocation.line, sourceLocation.column);
+          }
+        }
+        else {
+          // Direct assignment for UTF-32 (32-bit WChar)
+          this->pushChar((WChar)currentWChar, sourceLocation);
+          this->processBuffer();
+          computeNextCharPosition(currentWChar, sourceLocation.line, sourceLocation.column);
+        }
+        currentWChar = 0;
+      }
+    }
+    else {
+      // Invalid subsequent byte, throw an exception or handle error
+      throw EXCEPTION(GenericException,
+        S("Invalid input character sequence. Sequence could not be converted to wide characters."));
+    }
   }
 }
 
@@ -542,8 +596,7 @@ void Lexer::processStartChar(WChar inputChar)
  *                     Receiving the value of '\0' indicates that there are no
  *                     more characters in the input stream.
  */
-void Lexer::processNextChar(WChar inputChar)
-{
+void Lexer::processNextChar(WChar inputChar) {
   // There must be some states currently in the stack.
   ASSERT(this->stateCount != 0);
 
@@ -757,7 +810,7 @@ Lexer::NextAction Lexer::processMultiplyTerm(LexerState *state, WChar inputChar,
       }
     }
   }
-  // Check if we have already passed the required minimum number of occurances.
+  // Check if we have already passed the required minimum number of occurrences.
   if (tryOuter) {
     state->resizeLevels(currentLevel);
     return CONTINUE_SAME_CHAR;

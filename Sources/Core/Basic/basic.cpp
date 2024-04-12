@@ -8,11 +8,14 @@
  * For details on usage and copying conditions read the full license in the
  * accompanying license file or at <https://alusus.org/license.html>.
  */
-//==============================================================================
+ //==============================================================================
 
-#include "AlususOSAL.hpp"
+#include "OSAL.hpp"
 #include "core.h"
+
 #include <locale>
+#include <codecvt>
+#include <algorithm>
 
 namespace Core { namespace Basic
 {
@@ -20,15 +23,11 @@ namespace Core { namespace Basic
 //============================================================================
 // Variables and Types
 
-std::ostream &outStream = AlususOSAL::getCout();
+// typedef std::codecvt<WChar,Char,std::mbstate_t> FacetType;
 
-std::istream &inStream = AlususOSAL::getCin();
+// static std::locale utf8Locale("en_US.UTF-8");
 
-typedef std::codecvt<WChar,Char,std::mbstate_t> FacetType;
-
-static std::locale utf8Locale("en_US.UTF-8");
-
-static const FacetType& utf8Facet = std::use_facet<FacetType>(utf8Locale);
+// static const FacetType& utf8Facet = std::use_facet<FacetType>(utf8Locale);
 
 
 //============================================================================
@@ -83,15 +82,44 @@ void convertStr(
   Char const *input, int inputLength, WChar *output, int outputSize,
   int &processedInputLength, int &resultedOutputLength
 ) {
-  std::mbstate_t mystate = std::mbstate_t();
-  Char const *fromNext;
-  WChar *toNext;
+  // std::mbstate_t mystate = std::mbstate_t();
+  // Char const* fromNext;
+  // WChar* toNext;
 
-  // translate characters:
-  utf8Facet.in(mystate, input, input+inputLength, fromNext, output, output+outputSize, toNext);
+  // // translate characters:
+  // utf8Facet.in(mystate, input, input + inputLength, fromNext, output, output + outputSize, toNext);
 
-  processedInputLength = fromNext-input;
-  resultedOutputLength = toNext-output;
+  // processedInputLength = fromNext - input;
+  // resultedOutputLength = toNext - output;
+
+  // Initialize the resulting lengths to zero
+  processedInputLength = 0;
+  resultedOutputLength = 0;
+
+
+  // Determine the size of WChar and use the appropriate converter
+  if constexpr (sizeof(WChar) == 2) { // E.g. on Windows.
+    // UTF-16 conversion
+    std::wstring_convert<std::codecvt_utf8_utf16<WChar>, WChar> converter;
+    std::wstring wideStr = converter.from_bytes(input, input + inputLength);
+
+    size_t copySize = std::min(wideStr.size() * sizeof(WChar), (size_t) outputSize * sizeof(WChar));
+    std::memcpy(output, wideStr.data(), copySize);
+
+    processedInputLength = inputLength;
+    resultedOutputLength = (int) (copySize / sizeof(WChar));
+  }
+  else if constexpr (sizeof(WChar) == 4) { // E.g. on most Unix.
+    // UTF-32 conversion
+    std::wstring_convert<std::codecvt_utf8<WChar>, WChar> converter;
+    std::wstring wideStr = converter.from_bytes(input, input + inputLength);
+
+    size_t copySize = std::min(wideStr.size() * sizeof(WChar), (size_t) outputSize * sizeof(WChar));
+    std::memcpy(output, wideStr.data(), copySize);
+
+    processedInputLength = inputLength;
+    resultedOutputLength = (int) (copySize / sizeof(WChar));
+  }
 }
 
 
@@ -99,15 +127,43 @@ void convertStr(
   WChar const *input, int inputLength, Char *output, int outputSize,
   int &processedInputLength, int &resultedOutputLength
 ) {
-  std::mbstate_t mystate = std::mbstate_t();
-  WChar const *fromNext;
-  Char *toNext;
+  // std::mbstate_t mystate = std::mbstate_t();
+  // WChar const *fromNext;
+  // Char *toNext;
 
-  // translate characters:
-  utf8Facet.out(mystate, input, input+inputLength, fromNext, output, output+outputSize, toNext);
+  // // translate characters:
+  // utf8Facet.out(mystate, input, input+inputLength, fromNext, output, output+outputSize, toNext);
 
-  processedInputLength = fromNext-input;
-  resultedOutputLength = toNext-output;
+  // processedInputLength = fromNext-input;
+  // resultedOutputLength = toNext-output;
+
+  // Initialize the resulting lengths to zero
+  processedInputLength = 0;
+  resultedOutputLength = 0;
+
+  // Check the size of WChar to determine which conversion to use
+  if constexpr (sizeof(WChar) == 2) { // E.g. on Windows.
+    // Use codecvt_utf8_utf16 for UTF-16 to UTF-8 conversion
+    std::wstring_convert<std::codecvt_utf8_utf16<WChar>, WChar> converter;
+    std::string utf8Str = converter.to_bytes(input, input + inputLength);
+
+    size_t copyLength = std::min(utf8Str.size(), (size_t) outputSize);
+    std::memcpy(output, utf8Str.data(), copyLength);
+
+    processedInputLength = inputLength;
+    resultedOutputLength = (int) copyLength;
+  }
+  else if constexpr (sizeof(WChar) == 4) { // E.g. on most Unix.
+    // Use codecvt_utf8 for UTF-32 to UTF-8 conversion
+    std::wstring_convert<std::codecvt_utf8<WChar>, WChar> converter;
+    std::string utf8Str = converter.to_bytes(input, input + inputLength);
+
+    size_t copyLength = std::min(utf8Str.size(), (size_t) outputSize);
+    std::memcpy(output, utf8Str.data(), copyLength);
+
+    processedInputLength = inputLength;
+    resultedOutputLength = (int) copyLength;
+  }
 }
 
 

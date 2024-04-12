@@ -7,11 +7,6 @@
 project(AlususTests)
 cmake_minimum_required(VERSION 3.20.0)
 
-# Header and library files paths for LLVM
-include_directories("${LLVM_INCLUDE_DIRS}")
-link_directories("${LLVM_LIBRARY_DIRS}")
-add_definitions(${LLVM_DEFINITIONS})
-
 # Make sure the compiler finds the source files.
 include_directories("${AlususSrl_SOURCE_DIR}")
 include_directories("${AlususCore_SOURCE_DIR}")
@@ -78,13 +73,9 @@ set_target_properties(AlususTests PROPERTIES
   DEBUG_OUTPUT_NAME alusus_tests.dbg
   VERSION ${AlususVersion}
 )
-target_include_directories(AlususTests PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(AlususTests PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
 
 # Finally, we link Alusus libraries to our UnitTests project.
-target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
+target_link_libraries(AlususTests PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS})
 
 # Build C++ interoperability test lib.
 set(CppInteropTest_Source_Files cpp_interop_test.cpp)
@@ -115,11 +106,7 @@ if(ALUSUS_USE_RPATH)
     )
   endif()
 endif()
-target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
-target_include_directories(CppInteropTest PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(CppInteropTest PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
+target_link_libraries(CppInteropTest PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS})
 
 add_test(NAME Core
   COMMAND AlususTests "Core" ".alusus"

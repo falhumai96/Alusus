@@ -31,10 +31,6 @@ set_target_properties(AlususSrlLib PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususSrlLib PRIVATE "srl.h")
-target_include_directories(AlususSrlLib PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(AlususSrlLib PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
 
 # Copy libary header files to installation directory.
 install_files("/${ALUSUS_INCLUDE_DIR_NAME}/Srl" FILES srl.h)

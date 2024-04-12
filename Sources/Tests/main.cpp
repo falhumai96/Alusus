@@ -21,7 +21,6 @@
 
 // Alusus header files
 #include "core.h"
-#include "AlususDefs.h"
 #include "AlususOSAL.hpp"
 
 using Core::Notices::Notice;

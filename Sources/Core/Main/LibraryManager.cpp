@@ -10,13 +10,7 @@
  */
 //==============================================================================
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-#include <Windows.h>
-#else
-#include <dlfcn.h>
-#endif
-
-#include "AlususOSAL.hpp"
+#include "OSAL.hpp"
 #include "core.h"
 
 namespace Core::Main
@@ -92,37 +86,40 @@ LibraryGateway* LibraryManager::getGateway(Char const *libId)
                   S("ID not found among loaded libraries."), libId);
 }
 
+// TODO: Make the error string buffer dynamic.
+static std::string getDlError(apr_dso_handle_t *dsoHandle) {
+  constexpr size_t ERROR_BUFFER_SIZE = 256;
+  char errorBuffer[ERROR_BUFFER_SIZE];
+  apr_dso_error(dsoHandle, errorBuffer, ERROR_BUFFER_SIZE);
+  return errorBuffer;
+}
+
 PtrWord LibraryManager::load(Char const *path, Str &error)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-  // We can specify Windows flags if we start using LoadLibraryEx. For now, flags are ignored.
-  auto flags = 0;
-#else
-  auto flags = RTLD_NOW | RTLD_GLOBAL;
-#if defined(__linux__)
-  flags |= RTLD_DEEPBIND; // To start lookup symbols from the library itself initially.
-#endif
-#endif
-  void *handle = AlususOSAL::dlopen(path, flags);
-  if (!handle) {
+  apr_dso_handle_t *dsoHandle = nullptr;
+  apr_status_t rv = apr_dso_load(&dsoHandle, path, dsoHandlesPool.getPool());
+  if (rv != APR_SUCCESS) {
     if (error.getLength() != 0) error += S("\n");
-    error += AlususOSAL::dlerror();
+    std::string errorString = getDlError(dsoHandle);
+    error += errorString.c_str();
     return 0;
   }
 
   // Get the library gateway if this library supports it, otherwise we'll just load the library.
   LibraryGateway *gateway = nullptr;
-  LibraryGatewayGetter fn = reinterpret_cast<LibraryGatewayGetter>(AlususOSAL::dlsym(handle, LIBRARY_GATEWAY_GETTER_NAME));
-  if (fn) {
-    gateway = fn();
+  apr_dso_handle_sym_t gatewayGetterSym;
+  rv = apr_dso_sym(&gatewayGetterSym, dsoHandle, LIBRARY_GATEWAY_GETTER_NAME);
+  if (rv == APR_SUCCESS) {
+    gateway = reinterpret_cast<LibraryGatewayGetter>(gatewayGetterSym)();
     if (!gateway) {
-      AlususOSAL::dlclose(handle);
-      handle = nullptr;
+      // TODO: Check unloading errors.
+      apr_dso_unload(dsoHandle);
+      dsoHandle = nullptr;
       return 0;
     }
   }
 
-  PtrWord id = reinterpret_cast<PtrWord>(handle);
+  PtrWord id = reinterpret_cast<PtrWord>(dsoHandle);
   this->addLibrary(id, gateway);
   return id;
 }

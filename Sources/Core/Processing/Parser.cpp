@@ -10,7 +10,7 @@
  */
 //==============================================================================
 
-#include "AlususDefs.h"
+#include "OSAL.hpp"
 #include "core.h"
 
 namespace Core::Processing

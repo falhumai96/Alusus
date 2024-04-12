@@ -10,8 +10,8 @@
  */
 //==============================================================================
 
-#include "AlususOSAL.hpp"
 #include "core.h"
+#include "OSAL.hpp"
 
 namespace Core { namespace Processing
 {
@@ -63,11 +63,19 @@ SharedPtr<TiObject> Engine::processString(Char const *str, Char const *name)
 SharedPtr<TiObject> Engine::processFile(Char const *filename)
 {
   // Open the file.
-  auto autoFinHandle = AlususOSAL::ifstreamOpenFile(filename);
-  auto &fin = *autoFinHandle.get();
-  StdCharInStream finStream(&fin);
+  AutoAPRPool pool;
+  apr_file_t* sourceAPRFile;
+  apr_status_t rv = apr_file_open(&sourceAPRFile, filename, APR_FOPEN_READ, APR_FPROT_OS_DEFAULT, pool.getPool());
+  if (rv != APR_SUCCESS) {
+    throw EXCEPTION(InvalidArgumentException, S("filename"), S("Could not open file."), filename);
+  }
+  AutoAPRFile sourceFile(sourceAPRFile);
+  APRFilebuf sourceFileBuf(sourceFile.getFile());
+  std::istream sourceFileStream(&sourceFileBuf);
 
-  if (fin.fail()) {
+  StdCharInStream finStream(&sourceFileStream);
+
+  if (sourceFileStream.fail()) {
     throw EXCEPTION(InvalidArgumentException, S("filename"), S("Could not open file."), filename);
   }
   return this->processStream(&finStream, filename);

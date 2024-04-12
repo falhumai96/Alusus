@@ -10,6 +10,7 @@
  */
 //==============================================================================
 
+#include "OSAL.hpp"
 #include "core.h"
 
 namespace Core::Notices
@@ -48,31 +49,42 @@ Bool getSourceLocationPathSkipping()
 
 void printNotice(Notice const *msg)
 {
+  // Get the output stream.
+  AutoAPRPool pool;
+  apr_file_t* cStdoutFile;
+  apr_status_t rv = apr_file_open_stdout(&cStdoutFile, pool.getPool());
+  if (rv != APR_SUCCESS) {
+    throw EXCEPTION(GenericException, S("Error opening APR stdout."));
+  }
+  AutoAPRFile stdoutFile(cStdoutFile);
+  APRFilebuf stdoutBuf(stdoutFile.getFile());
+  std::ostream stdoutStream(&stdoutBuf);
+
   // We will only print the error message if we have a source location for it.
   if (msg->getSourceLocation() == 0) return;
 
   // Print severity.
   switch (msg->getSeverity()) {
     case 0:
-      outStream << S("\033[0;31m") << L18nDictionary::getSingleton()->get(S("BLOCKER"), S("BLOCKER")) << S(" ");
+      stdoutStream << S("\033[0;31m") << L18nDictionary::getSingleton()->get(S("BLOCKER"), S("BLOCKER")) << S(" ");
       break;
     case 1:
-      outStream << S("\033[0;31m") << L18nDictionary::getSingleton()->get(S("ERROR"), S("ERROR")) << S(" ");
+      stdoutStream << S("\033[0;31m") << L18nDictionary::getSingleton()->get(S("ERROR"), S("ERROR")) << S(" ");
       break;
     case 2:
     case 3:
-      outStream << S("\033[1;33m") << L18nDictionary::getSingleton()->get(S("WARNING"), S("WARNING")) << S(" ");
+      stdoutStream << S("\033[1;33m") << L18nDictionary::getSingleton()->get(S("WARNING"), S("WARNING")) << S(" ");
       break;
     case 4:
-      outStream << S("\033[0;34m") << L18nDictionary::getSingleton()->get(S("ATTN"), S("ATTN")) << S(" ");
+      stdoutStream << S("\033[0;34m") << L18nDictionary::getSingleton()->get(S("ATTN"), S("ATTN")) << S(" ");
       break;
   }
   // Print msg code.
-  outStream << msg->getCode() << ": ";
+  stdoutStream << msg->getCode() << ": ";
   // Print description.
-  outStream << msg->getDescription() << S("\033[0m") << NEW_LINE << S("  ");
+  stdoutStream << msg->getDescription() << S("\033[0m") << NEW_LINE << S("  ");
   // Print location.
-  outStream << getSourceLocationString(msg->getSourceLocation().get(), 2) << NEW_LINE;
+  stdoutStream << getSourceLocationString(msg->getSourceLocation().get(), 2) << NEW_LINE;
 }
 
 

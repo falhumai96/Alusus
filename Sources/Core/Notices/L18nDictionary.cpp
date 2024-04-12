@@ -10,9 +10,8 @@
  */
 //==============================================================================
 
-#include <AlususOSAL.hpp>
-
 #include "core.h"
+#include "OSAL.hpp"
 
 namespace Core::Notices
 {
@@ -24,20 +23,32 @@ void L18nDictionary::initialize(Char const *locale, Char const *l18nPath)
 {
   this->dictionary.clear();
   this->currentLocale = locale;
-  AlususOSAL::Path l18nPathFilesystemPath;
-  if (l18nPath) {
-    l18nPathFilesystemPath = AlususOSAL::Path(l18nPath);
-  } else {
-    l18nPathFilesystemPath = AlususOSAL::getModuleDirectory().parent_path().parent_path() / "Notices_L18n";
+
+  // Get the abs file path to the locale file.
+  Str localeFilePath;
+  {
+    std::string localeFilename = std::string(locale) + ".txt";
+    size_t neededLength = cwk_path_join(l18nPath, localeFilename.c_str(), nullptr, 0) + 1;
+    std::vector<Char> joinedPathBuffer(neededLength, 0);
+    cwk_path_join(l18nPath, localeFilename.c_str(), (Char*)joinedPathBuffer.data(), joinedPathBuffer.size());
+    localeFilePath = joinedPathBuffer.data();
   }
-  l18nPathFilesystemPath /= (std::string(locale) + ".txt");
-  auto autoFinHandle =
-      AlususOSAL::ifstreamOpenFile(l18nPathFilesystemPath.c_str());
-  auto &fin = *autoFinHandle.get();
-  if (!fin.fail()) {
-    while (!fin.eof()) {
+
+  // Open locale file stream.
+  AutoAPRPool pool;
+  apr_file_t* localeAPRFile;
+  apr_status_t rv = apr_file_open(&localeAPRFile, localeFilePath.getBuf(), APR_FOPEN_READ, APR_FPROT_OS_DEFAULT, pool.getPool());
+  if (rv != APR_SUCCESS) {
+    return;
+  }
+  AutoAPRFile localeFile(localeAPRFile);
+  APRFilebuf localeFileBuf(localeFile.getFile());
+  std::istream localeFileStream(&localeFileBuf);
+
+  if (!localeFileStream.fail()) {
+    while (!localeFileStream.eof()) {
       std::string line;
-      std::getline(fin, line);
+      std::getline(localeFileStream, line);
       Int pos = line.find(C(':'));
       if (pos != -1) {
         Str key(line.c_str(), pos);
@@ -73,8 +84,8 @@ Char const* L18nDictionary::get(Char const *key) const
 
 L18nDictionary* L18nDictionary::getSingleton()
 {
-  static L18nDictionary *l18nDictionary=0;
-  if (l18nDictionary == 0) {
+  static L18nDictionary *l18nDictionary = nullptr;
+  if (l18nDictionary == nullptr) {
     l18nDictionary = reinterpret_cast<L18nDictionary*>(GLOBAL_STORAGE->getObject(S("Core::Notices::L18nDictionary")));
     if (l18nDictionary == 0) {
       l18nDictionary = new L18nDictionary;

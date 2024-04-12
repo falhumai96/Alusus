@@ -10,7 +10,7 @@
  */
 //==============================================================================
 
-#include "AlususDefs.h"
+#include "OSAL.hpp"
 #include "spp.h"
 
 namespace Spp::LlvmCodeGen
@@ -66,6 +66,17 @@ llvm::Module* OfflineBuildTarget::getGlobalLlvmModule()
 void OfflineBuildTarget::addLlvmModule(std::unique_ptr<llvm::Module> module)
 {
   #ifdef ALUSUS_USE_LOGS
+    // Get the output stream.
+    AutoAPRPool pool;
+    apr_file_t* cStdoutFile;
+    apr_status_t rv = apr_file_open_stdout(&cStdoutFile, pool.getPool());
+    if (rv != APR_SUCCESS) {
+      throw EXCEPTION(GenericException, S("Error opening APR stdout."));
+    }
+    AutoAPRFile stdoutFile(cStdoutFile);
+    APRFilebuf stdoutBuf(stdoutFile.getFile());
+    std::ostream outStream(&stdoutBuf);
+
     if (Core::Basic::Logger::getFilter() & Spp::LogLevel::LLVMCODEGEN_IR) {
       // Dump the module to be compiled.
       outStream << S(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");

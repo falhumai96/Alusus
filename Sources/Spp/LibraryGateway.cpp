@@ -9,6 +9,7 @@
  */
 //==============================================================================
 
+#include "OSAL.hpp"
 #include "spp.h"
 
 namespace Spp
@@ -329,15 +330,7 @@ void LibraryGateway::initializeGlobalItemRepo(Core::Main::RootManager *manager)
   auto language = manager->getLanguage().getBuf();
   auto coreBinPath = manager->getCoreBinPath().getBuf();
 
-  Char const *platform;
-  #if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
-    platform = "windows";
-  #elif __APPLE__
-    platform = "macos";
-  #else
-    platform = "linux";
-  #endif
-
+  Char const *platform = ALUSUS_CMAKE_SYSTEM_NAME;
   this->globalItemRepo->addItem(S("!Process.argCount"), sizeof(argCount), &argCount);
   this->globalItemRepo->addItem(S("!Process.args"), sizeof(args), &args);
   this->globalItemRepo->addItem(S("!Process.language"), sizeof(language), &language);

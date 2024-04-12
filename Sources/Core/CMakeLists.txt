@@ -50,11 +50,7 @@ if (ALUSUS_USE_RPATH)
     )
   endif()
 endif()
-target_link_libraries(AlususStorage PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
-target_include_directories(AlususStorage PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(AlususStorage PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
+target_link_libraries(AlususStorage PRIVATE AlususOSAL)
 
 # Add a target for Alusus core library.
 set(AlususCoreLib_Source_Subdirs Basic Data Data/Grammar Data/Ast Notices Processing Processing/Handlers Main)
@@ -82,11 +78,7 @@ set_target_properties(AlususCoreLib PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCoreLib PRIVATE "core.h")
-target_link_libraries(AlususCoreLib PRIVATE AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
-target_include_directories(AlususCoreLib PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(AlususCoreLib PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
+target_link_libraries(AlususCoreLib PRIVATE AlususOSAL)
 
 # Add a target for Alusus core executable.
 set(AlususCore_Source_Files start.cpp interop.cpp)
@@ -106,13 +98,9 @@ set_target_properties(AlususCore PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCore PRIVATE "core.h")
-target_include_directories(AlususCore PRIVATE "${CMAKE_BINARY_DIR}/AlususDefs")
-if (ALUSUS_WIN32_UNICODE)
-  target_compile_definitions(AlususCore PRIVATE UNICODE ALUSUS_WIN32_UNICODE)
-endif()
 
 # Finally, we link the executable to the libraries.
-target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL ${CMAKE_DL_LIBS} nowide::nowide)
+target_link_libraries(AlususCore PRIVATE AlususSrlLib AlususCoreLib AlususStorage AlususOSAL)
 
 if (ALUSUS_USE_RPATH)
   if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -151,9 +139,18 @@ endif()
 string(REPLACE "//" "/" AlususArabicLink ${AlususArabicLink})
 string(REPLACE "//" "/" AlususArabicLinkTarget ${AlususArabicLinkTarget})
 
-install(CODE "execute_process( \
-    COMMAND ${CMAKE_COMMAND} -E create_symlink \
-    ${AlususArabicLinkTarget} \
-    ${AlususArabicLink}   \
-    COMMAND_ERROR_IS_FATAL ANY)"
-)
+# if (WIN32)
+#   install(CODE "execute_process( \
+#     COMMAND ${CMAKE_COMMAND} -E copy \
+#     ${AlususArabicLinkTarget} \
+#     ${AlususArabicLink} \
+#     COMMAND_ERROR_IS_FATAL ANY)"
+#   )
+# else ()
+#   install(CODE "execute_process( \
+#     COMMAND ${CMAKE_COMMAND} -E create_symlink \
+#     ${AlususArabicLinkTarget} \
+#     ${AlususArabicLink}   \
+#     COMMAND_ERROR_IS_FATAL ANY)"
+#   )
+# endif()

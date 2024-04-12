@@ -6,15 +6,25 @@ project(Alusus)
 cmake_minimum_required(VERSION 3.20.0)
 
 # Build options.
-option(ALUSUS_BIN_DIR_NAME "The Alusus \"bin\" directory name" "bin")
-option(ALUSUS_LIB_DIR_NAME "The Alusus \"lib\" directory name" "lib")
-option(ALUSUS_INCLUDE_DIR_NAME "The Alusus \"include\" directory name" "include")
-option(ALUSUS_WIN32_UNICODE "Build Alusus for Windows with Unicode support" ON)
-option(ALUSUS_USE_RPATH "Build Alusus with RPATH support for systems that support RPATH" OFF)
-
-if (NOT WIN32)
-  set(ALUSUS_WIN32_UNICODE OFF)
-endif()
+option(ALUSUS_BIN_DIR_NAME "[String] The Alusus \"bin\" directory name" "bin")
+option(ALUSUS_LIB_DIR_NAME "[String] The Alusus \"lib\" directory name" "lib")
+option(ALUSUS_INCLUDE_DIR_NAME "[String] The Alusus \"include\" directory name" "include")
+option(ALUSUS_USE_RPATH "[Bool] Build Alusus with RPATH support for systems that support RPATH" OFF)
+option(ALUSUS_BUILD_TESTS "[Bool] Build Alusus tests." ON)
+option(
+  ALUSUS_OSAL_APR_MANUAL_CONFIG
+  "[Bool] Manually specify APR's package configuration (e.g. when building for Windows without pkg-config)."
+  OFF
+)
+option(ALUSUS_OSAL_APR_MANUAL_CONFIG_INCLUDE_DIR "[String] APR \"include\" directory." "")
+option(
+  ALUSUS_OSAL_APR_MANUAL_CONFIG_DEFS
+  "[List] APR compile-time definitions (e.g. APR_DECLARE_STATIC for static linking or APR_DECLARE_EXPORT for \
+dynamic linking for Windows builds)"
+  ""
+)
+option(ALUSUS_OSAL_APR_MANUAL_CONFIG_LIB_DIR "[String] APR \"lib\" directory." "")
+option(ALUSUS_OSAL_APR_MANUAL_CONFIG_LIBS "[List] APR library and APR's dependencies (e.g. Ws2_32 and Rpcrt4 for Windows builds)." "")
 
 if(NOT DEFINED Python3_EXECUTABLE)
   # Only find Python executable once and cache it. Calling it twice will result in an
@@ -38,9 +48,11 @@ set(AlususVersion ${CMAKE_MATCH_1})
 string(REGEX MATCH "^[0-9]+\\.[0-9]+" AlususShlibVersion ${AlususVersion})
 string(REGEX MATCH "REVISION: ([A-Za-z0-9]+)" _dummy_ ${VersionInfo})
 set(AlususRevision ${CMAKE_MATCH_1})
-if (NOT ${AlususRevision} STREQUAL "")
+
+if(NOT ${AlususRevision} STREQUAL "")
   set(AlususRevision "-${AlususRevision}")
 endif()
+
 string(REGEX MATCH "DATE: ([0-9]+-[0-9]+-[0-9]+)" _dummy_ ${VersionInfo})
 set(AlususReleaseDate ${CMAKE_MATCH_1})
 string(REGEX MATCH "HIJRI_DATE: ([0-9]+-[0-9]+-[0-9]+)" _dummy_ ${VersionInfo})
@@ -50,7 +62,6 @@ message(STATUS "Alusus Revision: " ${AlususRevision})
 message(STATUS "Alusus Shlib Version: " ${AlususShlibVersion})
 message(STATUS "Alusus Release Date: " ${AlususReleaseDate})
 message(STATUS "Alusus Hijri Release Date: " ${AlususHijriReleaseDate})
-
 
 # Detect the supported compiler used.
 function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR RETURN_MSG_VAR)
@@ -95,7 +106,6 @@ function(alusus_get_compiler_used COMPILER_TO_CHECK RETURN_VALUE_VAR RETURN_MSG_
   endif()
 endfunction()
 
-
 alusus_get_compiler_used("CXX" AlususCompilerUsed AlususCompilerUsedMsg)
 message(STATUS "Alusus compiler used: ${AlususCompilerUsedMsg}")
 
@@ -116,23 +126,39 @@ execute_process(COMMAND
   "${ALUSUS_LIB_DIR_NAME}"
   "${ALUSUS_INCLUDE_DIR_NAME}"
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Tools/BuildSrc" COMMAND_ERROR_IS_FATAL ANY)
+include_directories("${CMAKE_BINARY_DIR}/AlususDefs")
 
 # Prepare compile and link flags based on the compiler selected.
+string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_lower)
+
 if(AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "MSVCClang" OR AlususCompilerUsed STREQUAL "AppleClang")
   # Clang with GNU interface options.
   set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-const-variable -Wno-unused-result -fno-rtti -fvisibility=hidden")
-elseif (AlususCompilerUsed STREQUAL "GCC")
+
+  if(cmake_build_type_lower STREQUAL "debug")
+    set(Alusus_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -g")
+  endif()
+elseif(AlususCompilerUsed STREQUAL "GCC")
   # GCC with GNU interface options.
   set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} -Werror=return-type -Wunused-variable -Winit-self -Wuninitialized -Wunused-but-set-parameter -Wunused-but-set-variable -Wno-unused-result -fno-rtti -fvisibility=hidden")
+
+  if(cmake_build_type_lower STREQUAL "debug")
+    set(Alusus_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} -g")
+  endif()
 elseif(AlususCompilerUsed STREQUAL "Cl")
   # MSVC Cl or Clang with MSVC Cl interface options.
-  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} /w44265 /w44130 /w44296 /wd4100 /wd4101 /wd4189 /EHsc /wd4005 /wd4146 /wd4355 /wd4800 /wd4996")  
+  set(Alusus_COMPILE_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} /w44265 /w44130 /w44296 /wd4100 /wd4101 /wd4189 /EHsc /wd4005 /wd4146 /wd4355 /wd4800 /wd4996")
+
+  if(cmake_build_type_lower STREQUAL "debug")
+    set(Alusus_COMPILE_FLAGS "${Alusus_COMPILE_FLAGS} /DEBUG")
+  endif()
 endif()
 
 if(ALUSUS_USE_RPATH)
   set(CMAKE_SKIP_BUILD_RPATH OFF)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_MACOSX_RPATH ON)
   endif()
@@ -144,19 +170,16 @@ set(CMAKE_CXX_FLAGS_RELEASE "")
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS "")
 
-# Find Alusus direct dependencies.
-find_package(nowide CONFIG REQUIRED)
-find_package(LLVM CONFIG REQUIRED)
-
 # Macro for generating pre-compiled headers.
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${Alusus_SOURCE_DIR}")
 
 # Enable testing
 enable_testing()
 
-set (CUSTOM_OUTPUT_PATH "" CACHE PATH "Custom path to output all executable and library files. Useful during development.")
-if (NOT CUSTOM_OUTPUT_PATH STREQUAL "")
-  if (NOT EXISTS "${CUSTOM_OUTPUT_PATH}")
+set(CUSTOM_OUTPUT_PATH "" CACHE PATH "Custom path to output all executable and library files. Useful during development.")
+
+if(NOT CUSTOM_OUTPUT_PATH STREQUAL "")
+  if(NOT EXISTS "${CUSTOM_OUTPUT_PATH}")
     message(SEND_ERROR "Invalid custom output path was provided: " ${CUSTOM_OUTPUT_PATH} ".")
   else()
     message(STATUS "The following custom output path was provided: " ${CUSTOM_OUTPUT_PATH} ".")
@@ -166,8 +189,11 @@ if (NOT CUSTOM_OUTPUT_PATH STREQUAL "")
 endif()
 
 # Add projects
-add_subdirectory(AlususOSAL)
+add_subdirectory(OSAL)
 add_subdirectory(Srt)
 add_subdirectory(Core)
 add_subdirectory(Spp)
-add_subdirectory(Tests)
+
+if(ALUSUS_BUILD_TESTS)
+  add_subdirectory(Tests)
+endif()
