@@ -81,7 +81,7 @@ class IdentifierTokenizingHandler : public TokenizingHandler
   }
 
   public: virtual void prepareToken(
-    Data::Token *token, Word id, WChar const *tokenText, Word tokenTextLength,
+    Data::Token *token, Word id, U32Char const *tokenText, Word tokenTextLength,
     Data::SourceLocationRecord const &sourceLocation
   );
 

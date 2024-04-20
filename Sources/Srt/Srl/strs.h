@@ -13,6 +13,8 @@
 #ifndef SRL_STRS_S
 #define SRL_STRS_S
 
+#include <string>
+
 namespace Srl
 {
 
@@ -504,16 +506,51 @@ template<class T> class StringBase
 //==============================================================================
 // Function Specializations
 
+// Convert a UTF-32 string to a UTF-8 string
+std::string utf32_to_utf8(const std::u32string &utf32);
+
+// Convert a UTF-8 string to a UTF-32 string
+std::u32string utf8_to_utf32(const std::string &utf8);
+
+// A swprintf-like function for char32_t strings
+int u32_snprintf(char32_t *buffer, size_t size, const char32_t *format, ...);
+
+const char32_t* u32_strchr(const char32_t* str, char32_t ch);
+
+const char32_t* u32_memchr(const char32_t* ptr, char32_t ch, size_t count);
+
+const char32_t* u32_strstr(const char32_t* str, const char32_t* substr);
+
+const char32_t* u32_strrchr(const char32_t* str, char32_t ch);
+
+int u32_strcmp(const char32_t* str1, const char32_t* str2);
+
+int u32_strncmp(const char32_t* str1, const char32_t* str2, size_t count);
+
+char32_t* u32_strcpy(char32_t* dest, const char32_t* src);
+
+char32_t* u32_strncpy(char32_t* dest, const char32_t* src, size_t count);
+
+char32_t* u32_strcat(char32_t* dest, const char32_t* src);
+
+char32_t* u32_strncat(char32_t* dest, const char32_t* src, size_t count);
+
+size_t u32_strlen(const char32_t* str);
+
+char32_t u32_towupper(char32_t ch);
+
+char32_t u32_towlower(char32_t ch);
+
 template<> inline void StringBase<Char>::append(LongInt i) {
   static constexpr size_t bufsize = 22;
   Char buf[bufsize];
   snprintf(buf, bufsize, "%ld", i);
   this->append(buf);
 }
-template<> inline void StringBase<WChar>::append(LongInt i) {
+template<> inline void StringBase<U32Char>::append(LongInt i) {
   static constexpr size_t bufsize = 22;
-  WChar buf[bufsize];
-  swprintf(buf, bufsize, L"%ld", i);
+  U32Char buf[bufsize];
+  u32_snprintf(buf, bufsize, U"%ld", i);
   this->append(buf);
 }
 
@@ -523,102 +560,102 @@ template<> inline void StringBase<Char>::append(Double d) {
   snprintf(buf, bufsize, "%f", d);
   this->append(buf);
 }
-template<> inline void StringBase<WChar>::append(Double d) {
+template<> inline void StringBase<U32Char>::append(Double d) {
   static constexpr size_t bufsize = 22;
-  WChar buf[bufsize];
-  swprintf(buf, bufsize, L"%f", d);
+  U32Char buf[bufsize];
+  u32_snprintf(buf, bufsize, U"%f", d);
   this->append(buf);
 }
 
 template<> inline Char const* StringBase<Char>::find(Char const *s, Char c) {
   return strchr(s, c);
 }
-template<> inline WChar const* StringBase<WChar>::find(WChar const *s, WChar c) {
-  return wcschr(s, c);
+template<> inline U32Char const* StringBase<U32Char>::find(U32Char const *s, U32Char c) {
+  return u32_strchr(s, c);
 }
 
 template<> inline Char const* StringBase<Char>::find(Char const *s, Char c, LongInt n) {
   return (Char*)memchr(s, c, n);
 }
-template<> inline WChar const* StringBase<WChar>::find(WChar const *s, WChar c, LongInt n) {
-  return wmemchr(s, c, n);
+template<> inline U32Char const* StringBase<U32Char>::find(U32Char const *s, U32Char c, LongInt n) {
+  return u32_memchr(s, c, n);
 }
 
 template<> inline Char const* StringBase<Char>::find(Char const *haystack, Char const *needle) {
   return strstr(haystack, needle);
 }
-template<> inline WChar const* StringBase<WChar>::find(WChar const *haystack, WChar const *needle) {
-  return wcsstr(haystack, needle);
+template<> inline U32Char const* StringBase<U32Char>::find(U32Char const *haystack, U32Char const *needle) {
+  return u32_strstr(haystack, needle);
 }
 
 template<> inline Char const* StringBase<Char>::findLast(Char const *s, Char c) {
   return strrchr(s, c);
 }
-template<> inline WChar const* StringBase<WChar>::findLast(WChar const *s, WChar c) {
-  return wcsrchr(s, c);
+template<> inline U32Char const* StringBase<U32Char>::findLast(U32Char const *s, U32Char c) {
+  return u32_strrchr(s, c);
 }
 
 template<> inline Int StringBase<Char>::compare(Char const *s1, Char const *s2) {
   return strcmp(s1, s2);
 }
-template<> inline Int StringBase<WChar>::compare(WChar const *s1, WChar const *s2) {
-  return wcscmp(s1, s2);
+template<> inline Int StringBase<U32Char>::compare(U32Char const *s1, U32Char const *s2) {
+  return u32_strcmp(s1, s2);
 }
 
 template<> inline Int StringBase<Char>::compare(Char const *s1, Char const *s2, LongInt n) {
   return strncmp(s1, s2, n);
 }
-template<> inline Int StringBase<WChar>::compare(WChar const *s1, WChar const *s2, LongInt n) {
-  return wcsncmp(s1, s2, n);
+template<> inline Int StringBase<U32Char>::compare(U32Char const *s1, U32Char const *s2, LongInt n) {
+  return u32_strncmp(s1, s2, n);
 }
 
 template<> inline Char* StringBase<Char>::copy(Char *dest, Char const *src) {
   return strcpy(dest, src);
 }
-template<> inline WChar* StringBase<WChar>::copy(WChar *dest, WChar const *src) {
-  return wcscpy(dest, src);
+template<> inline U32Char* StringBase<U32Char>::copy(U32Char *dest, U32Char const *src) {
+  return u32_strcpy(dest, src);
 }
 
 template<> inline Char* StringBase<Char>::copy(Char *dest, Char const *src, LongInt n) {
   return strncpy(dest, src, n);
 }
-template<> inline WChar* StringBase<WChar>::copy(WChar *dest, WChar const *src, LongInt n) {
-  return wcsncpy(dest, src, n);
+template<> inline U32Char* StringBase<U32Char>::copy(U32Char *dest, U32Char const *src, LongInt n) {
+  return u32_strncpy(dest, src, n);
 }
 
 template<> inline Char* StringBase<Char>::concat(Char *dest, Char const *src) {
   return strcat(dest, src);
 }
-template<> inline WChar* StringBase<WChar>::concat(WChar *dest, WChar const *src) {
-  return wcscat(dest, src);
+template<> inline U32Char* StringBase<U32Char>::concat(U32Char *dest, U32Char const *src) {
+  return u32_strcat(dest, src);
 }
 
 template<> inline Char* StringBase<Char>::concat(Char *dest, Char const *src, LongInt n) {
   return strncat(dest, src, n);
 }
-template<> inline WChar* StringBase<WChar>::concat(WChar *dest, WChar const *src, LongInt n) {
-  return wcsncat(dest, src, n);
+template<> inline U32Char* StringBase<U32Char>::concat(U32Char *dest, U32Char const *src, LongInt n) {
+  return u32_strncat(dest, src, n);
 }
 
 template<> inline LongInt StringBase<Char>::getLength(Char const *s) {
   return strlen(s);
 }
-template<> inline LongInt StringBase<WChar>::getLength(WChar const *s) {
-  return wcslen(s);
+template<> inline LongInt StringBase<U32Char>::getLength(U32Char const *s) {
+  return u32_strlen(s);
 }
 
 template<> inline Char StringBase<Char>::toUpper(Char c) {
   return toupper(c);
 }
-template<> inline WChar StringBase<WChar>::toUpper(WChar c) {
-  return towupper(c);
+template<> inline U32Char StringBase<U32Char>::toUpper(U32Char c) {
+  return u32_towupper(c);
 }
 
 template<> inline Char StringBase<Char>::toLower(Char c) {
   return tolower(c);
 }
-template<> inline WChar StringBase<WChar>::toLower(WChar c) {
-  return towlower(c);
+template<> inline U32Char StringBase<U32Char>::toLower(U32Char c) {
+  return u32_towlower(c);
 }
 
 
@@ -627,7 +664,7 @@ template<> inline WChar StringBase<WChar>::toLower(WChar c) {
 
 typedef StringBase<Char> String;
 
-typedef StringBase<WChar> WString;
+typedef StringBase<U32Char> U32String;
 
 }; // namespace
 

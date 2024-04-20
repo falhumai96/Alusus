@@ -15,7 +15,7 @@
 namespace Core { namespace Processing
 {
 
-void computeNextCharPosition(WChar ch, Int &line, Int &column)
+void computeNextCharPosition(U32Char ch, Int &line, Int &column)
 {
   if (ch == WC('\r')) {
     column = 1;

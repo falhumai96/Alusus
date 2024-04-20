@@ -1,6 +1,6 @@
 /**
- * @file Core/Basic/WStr.h
- * Contains the header of class Core::Basic::WStr.
+ * @file Core/Basic/U32Str.h
+ * Contains the header of class Core::Basic::U32Str.
  *
  * @copyright Copyright (C) 2021 Sarmad Khalid Abdullah
  *
@@ -17,28 +17,28 @@ namespace Core::Basic
 {
 
 /**
- * @brief Basic wide string functionality with comparison operators.
+ * @brief Basic UTF-32 string functionality with comparison operators.
  * @ingroup basic_datatypes
  *
- * This class overrides std's wstring class to provide comparison operators.
+ * This class overrides std's u32string class to provide comparison operators.
  */
-class WStr : public Srl::WString
+class U32Str : public Srl::U32String
 {
   //============================================================================
   // Constructors
 
-  public: using Srl::WString::WString;
+  public: using Srl::U32String::U32String;
 
-  public: WStr(Srl::WString const &str) : Srl::WString(str)
+  public: U32Str(Srl::U32String const &str) : Srl::U32String(str)
   {
   }
 
-  public: WStr(WChar const *str, LongInt pos, LongInt n)
+  public: U32Str(U32Char const *str, LongInt pos, LongInt n)
   {
     this->assign(str, pos, n);
   }
 
-  public: WStr(Char const *str, LongInt pos=0, LongInt n=0)
+  public: U32Str(Char const *str, LongInt pos=0, LongInt n=0)
   {
     this->assign(str, pos, n);
   }
@@ -47,25 +47,24 @@ class WStr : public Srl::WString
   //============================================================================
   // Functions
 
-  using Srl::WString::assign;
+  using Srl::U32String::assign;
 
-  public: void assign(WChar const *buf, LongInt pos, LongInt n);
+  public: void assign(U32Char const *buf, LongInt pos, LongInt n);
 
   public: void assign(Char const *buf, LongInt pos, LongInt n);
 
   public: void assign(Char const *s, Word n=0)
   {
     if (n == 0) n = getStrLen(s);
-    WChar *buffer = reinterpret_cast<WChar*>(SALLOC(n*sizeof(WChar)));
+    std::vector<U32Char> buffer(n + 1, 0);
     Int inLength, outLength;
-    convertStr(s, n, buffer, n, inLength, outLength);
-    this->assign(buffer, outLength);
-    SFREE(buffer);
+    convertStr(s, n, (U32Char*) buffer.data(), n, inLength, outLength);
+    this->assign((U32Char*) buffer.data(), outLength);
   }
 
-  public: SbWStr const sbwstr() const
+  public: SbU32Str const sbu32str() const
   {
-    return sbwstr_cast(this->getBuf());
+    return sbu32str_cast(this->getBuf());
   }
 
 }; // class

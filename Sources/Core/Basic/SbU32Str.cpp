@@ -1,6 +1,6 @@
 /**
- * @file Core/Basic/SbWStr.cpp
- * Contains the implementation of class Core::Basic::SbWStr.
+ * @file Core/Basic/SbU32Str.cpp
+ * Contains the implementation of class Core::Basic::SbU32Str.
  *
  * @copyright Copyright (C) 2021 Sarmad Khalid Abdullah
  *
@@ -10,6 +10,8 @@
  */
 //==============================================================================
 
+#include <vector>
+
 #include "core.h"
 
 namespace Core::Basic
@@ -18,7 +20,7 @@ namespace Core::Basic
 //==============================================================================
 // Member Functions
 
-void SbWStr::assign(WChar const *str, Word n, Word bufferSize)
+void SbU32Str::assign(U32Char const *str, Word n, Word bufferSize)
 {
   if (bufferSize < 2) {
     throw EXCEPTION(InvalidArgumentException, S("bufferSize"), S("Buffer size too small."), bufferSize);
@@ -34,7 +36,7 @@ void SbWStr::assign(WChar const *str, Word n, Word bufferSize)
 }
 
 
-void SbWStr::append(WChar const *str, Word strSize, Word bufferSize)
+void SbU32Str::append(U32Char const *str, Word strSize, Word bufferSize)
 {
   if (str == 0) return;
   if (strSize == 0) strSize = getStrLen(str);
@@ -46,33 +48,31 @@ void SbWStr::append(WChar const *str, Word strSize, Word bufferSize)
 }
 
 
-void SbWStr::assign(Char const *str, Word n, Word bufferSize)
+void SbU32Str::assign(Char const *str, Word n, Word bufferSize)
 {
   if (bufferSize < 2) {
     throw EXCEPTION(InvalidArgumentException, S("bufferSize"), S("Buffer size too small."), bufferSize);
   }
-  if (str == 0) {
+  if (!str) {
     this->buf[0] = 0;
     return;
   }
   if (n == 0) n = getStrLen(str);
-  WChar *buffer = reinterpret_cast<WChar*>(SALLOC(n*sizeof(WChar)));
+  std::vector<U32Char> buffer(n + 1, 0);
   Int inLength, outLength;
-  convertStr(str, n, buffer, n, inLength, outLength);
-  this->assign(buffer, outLength, bufferSize);
-  SFREE(buffer);
+  convertStr(str, n, (U32Char*) buffer.data(), n, inLength, outLength);
+  this->assign((U32Char*) buffer.data(), outLength, bufferSize);
 }
 
 
-void SbWStr::append(Char const *str, Word srcSize, Word bufferSize)
+void SbU32Str::append(Char const *str, Word srcSize, Word bufferSize)
 {
-  if (str == 0) return;
+  if (!str) return;
   if (srcSize == 0) srcSize = getStrLen(str);
-  WChar *buffer = reinterpret_cast<WChar*>(SALLOC(srcSize*sizeof(WChar)));
+  std::vector<U32Char> buffer(srcSize + 1, 0);
   Int inLength, outLength;
-  convertStr(str, srcSize, buffer, srcSize, inLength, outLength);
-  this->append(buffer, outLength, bufferSize);
-  SFREE(buffer);
+  convertStr(str, srcSize, (U32Char*) buffer.data(), srcSize, inLength, outLength);
+  this->append((U32Char*) buffer.data(), outLength, bufferSize);
 }
 
 } // namespace

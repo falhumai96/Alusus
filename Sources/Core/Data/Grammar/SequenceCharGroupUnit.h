@@ -35,10 +35,10 @@ class SequenceCharGroupUnit : public CharGroupUnit
   // Member Variables
 
   /// The character code of the start character in the sequence.
-  private: WChar startCode;
+  private: U32Char startCode;
 
   /// The character code of the end character in the sequence.
-  private: WChar endCode;
+  private: U32Char endCode;
 
 
   //============================================================================
@@ -48,7 +48,7 @@ class SequenceCharGroupUnit : public CharGroupUnit
   {
   }
 
-  public: SequenceCharGroupUnit(WChar s, WChar e) : startCode(s), endCode(e)
+  public: SequenceCharGroupUnit(U32Char s, U32Char e) : startCode(s), endCode(e)
   {
   }
 
@@ -65,7 +65,7 @@ class SequenceCharGroupUnit : public CharGroupUnit
   {
   }
 
-  public: static SharedPtr<SequenceCharGroupUnit> create(WChar s, WChar e)
+  public: static SharedPtr<SequenceCharGroupUnit> create(U32Char s, U32Char e)
   {
     return newSrdObj<SequenceCharGroupUnit>(s, e);
   }
@@ -86,7 +86,7 @@ class SequenceCharGroupUnit : public CharGroupUnit
   }
 
   /// Get the code of the start of the sequence.
-  public: WChar getStartCode()
+  public: U32Char getStartCode()
   {
     return this->startCode;
   }
@@ -98,7 +98,7 @@ class SequenceCharGroupUnit : public CharGroupUnit
   }
 
   /// Get the code of the end of the sequence.
-  public: WChar getEndCode()
+  public: U32Char getEndCode()
   {
     return this->endCode;
   }

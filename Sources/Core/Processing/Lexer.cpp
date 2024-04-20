@@ -52,7 +52,6 @@ void Lexer::initialize(SharedPtr<Data::Ast::Scope> rootScope)
   //}
 }
 
-
 /**
  * Add a single character to the input buffer and keep processing until no more
  * characters are in the input buffer.
@@ -64,76 +63,93 @@ void Lexer::initialize(SharedPtr<Data::Ast::Scope> rootScope)
  */
 void Lexer::handleNewChar(Char inputChar, Data::SourceLocationRecord &sourceLocation)
 {
-  Byte byte = (Byte)(inputChar);
-  if (remainingChars == 0) {
-    // Determine the length of the UTF-8 character
-    if ((byte & 0x80) == 0) { // 0xxxxxxx
-      this->pushChar((WChar)byte, sourceLocation);
-      this->processBuffer();
-      computeNextCharPosition((WChar)byte, sourceLocation.line, sourceLocation.column);
-    }
-    else if ((byte & 0xE0) == 0xC0) { // 110xxxxx
-      currentWChar = byte & 0x1F;
-      remainingChars = 1;
-    }
-    else if ((byte & 0xF0) == 0xE0) { // 1110xxxx
-      currentWChar = byte & 0x0F;
-      remainingChars = 2;
-    }
-    else if ((byte & 0xF8) == 0xF0) { // 11110xxx
-      currentWChar = byte & 0x07;
-      remainingChars = 3;
-    }
-    else {
-      // Invalid first byte, throw an exception or handle error
-      throw EXCEPTION(GenericException,
-        S("Invalid input character sequence. Sequence could not be converted to wide characters."));
-    }
-  }
-  else {
-    // Process the subsequent bytes of the UTF-8 character
-    if ((byte & 0xC0) == 0x80) { // 10xxxxxx
-      currentWChar = (currentWChar << 6) | (byte & 0x3F);
-      --remainingChars;
+  // Byte byte = (Byte)(inputChar);
+  // if (remainingChars == 0) {
+  //   // Determine the length of the UTF-8 character
+  //   if ((byte & 0x80) == 0) { // 0xxxxxxx
+  //     this->pushChar((U32Char)byte, sourceLocation);
+  //     this->processBuffer();
+  //     computeNextCharPosition((U32Char)byte, sourceLocation.line, sourceLocation.column);
+  //   }
+  //   else if ((byte & 0xE0) == 0xC0) { // 110xxxxx
+  //     currentU32Char = byte & 0x1F;
+  //     remainingChars = 1;
+  //   }
+  //   else if ((byte & 0xF0) == 0xE0) { // 1110xxxx
+  //     currentU32Char = byte & 0x0F;
+  //     remainingChars = 2;
+  //   }
+  //   else if ((byte & 0xF8) == 0xF0) { // 11110xxx
+  //     currentU32Char = byte & 0x07;
+  //     remainingChars = 3;
+  //   }
+  //   else {
+  //     // Invalid first byte, throw an exception or handle error
+  //     throw EXCEPTION(GenericException,
+  //       S("Invalid input character sequence. Sequence could not be converted to UTF-32 characters."));
+  //   }
+  // }
+  // else {
+  //   // Process the subsequent bytes of the UTF-8 character
+  //   if ((byte & 0xC0) == 0x80) { // 10xxxxxx
+  //     currentU32Char = (currentU32Char << 6) | (byte & 0x3F);
+  //     --remainingChars;
 
-      // If this was the last byte of the character, convert and append it to the string
-      if (remainingChars == 0) {
-        if constexpr (sizeof(WChar) == 2) {
-          // Handle surrogate pairs for UTF-16 (16-bit WChar)
-          if (currentWChar <= 0xFFFF) {
-            // Character fits in a single WChar
-            this->pushChar((WChar)currentWChar, sourceLocation);
-            this->processBuffer();
-            computeNextCharPosition(currentWChar, sourceLocation.line, sourceLocation.column);
-          }
-          else {
-            // Convert to surrogate pair
-            currentWChar -= 0x10000;
-            WChar firstChar = (WChar)((currentWChar >> 10) + 0xD800);
-            WChar secondChar = (WChar)((currentWChar & 0x3FF) + 0xDC00);
+  //     // If this was the last byte of the character, convert and append it to the string
+  //     if (remainingChars == 0) {
+  //       if constexpr (sizeof(U32Char) == 2) {
+  //         // Handle surrogate pairs for UTF-16 (16-bit U32Char)
+  //         if (currentU32Char <= 0xFFFF) {
+  //           // Character fits in a single U32Char
+  //           this->pushChar((U32Char)currentU32Char, sourceLocation);
+  //           this->processBuffer();
+  //           computeNextCharPosition(currentU32Char, sourceLocation.line, sourceLocation.column);
+  //         }
+  //         else {
+  //           // Convert to surrogate pair
+  //           currentU32Char -= 0x10000;
+  //           U32Char firstChar = (U32Char)((currentU32Char >> 10) + 0xD800);
+  //           U32Char secondChar = (U32Char)((currentU32Char & 0x3FF) + 0xDC00);
 
-            this->pushChar(firstChar, sourceLocation); // High surrogate
-            this->processBuffer();
-            computeNextCharPosition(firstChar, sourceLocation.line, sourceLocation.column);
-            this->pushChar(secondChar, sourceLocation); // Low surrogate
-            this->processBuffer();
-            computeNextCharPosition(secondChar, sourceLocation.line, sourceLocation.column);
-          }
-        }
-        else {
-          // Direct assignment for UTF-32 (32-bit WChar)
-          this->pushChar((WChar)currentWChar, sourceLocation);
-          this->processBuffer();
-          computeNextCharPosition(currentWChar, sourceLocation.line, sourceLocation.column);
-        }
-        currentWChar = 0;
-      }
-    }
-    else {
-      // Invalid subsequent byte, throw an exception or handle error
-      throw EXCEPTION(GenericException,
-        S("Invalid input character sequence. Sequence could not be converted to wide characters."));
-    }
+  //           this->pushChar(firstChar, sourceLocation); // High surrogate
+  //           this->processBuffer();
+  //           computeNextCharPosition(firstChar, sourceLocation.line, sourceLocation.column);
+  //           this->pushChar(secondChar, sourceLocation); // Low surrogate
+  //           this->processBuffer();
+  //           computeNextCharPosition(secondChar, sourceLocation.line, sourceLocation.column);
+  //         }
+  //       }
+  //       else {
+  //         // Direct assignment for UTF-32 (32-bit U32Char)
+  //         this->pushChar((U32Char)currentU32Char, sourceLocation);
+  //         this->processBuffer();
+  //         computeNextCharPosition(currentU32Char, sourceLocation.line, sourceLocation.column);
+  //       }
+  //       currentU32Char = 0;
+  //     }
+  //   }
+  //   else {
+  //     // Invalid subsequent byte, throw an exception or handle error
+  //     throw EXCEPTION(GenericException,
+  //       S("Invalid input character sequence. Sequence could not be converted to UTF-32 characters."));
+  //   }
+  // }
+  // Buffer the input sequence until it can be converted to UTF-32 characters.
+  this->tempByteCharBuffer[this->tempByteCharCount] = inputChar;
+  ++this->tempByteCharCount;
+  U32Char wideCharBuffer[1];
+  // Try converting to UTF-32 characters.
+  Int processedIn, processedOut;
+  convertStr(this->tempByteCharBuffer, this->tempByteCharCount, wideCharBuffer, 1, processedIn, processedOut);
+  if (processedOut != 0) {
+    // Conversion was successful. Send converted character to the buffer.
+    this->pushChar(wideCharBuffer[0], sourceLocation);
+    this->processBuffer();
+    computeNextCharPosition(wideCharBuffer[0], sourceLocation.line, sourceLocation.column);
+    this->tempByteCharCount = 0;
+  } else if (this->tempByteCharCount == 4) {
+    throw EXCEPTION(GenericException,
+                    S("Invalid input character sequence. Sequence could not be converted to UTF-32 characters."));
   }
 }
 
@@ -190,7 +206,7 @@ void Lexer::processBuffer()
  * @param sl The source location of the given character.
  * @return Returns true if the character was inserted, false otherwise.
  */
-Bool Lexer::pushChar(WChar ch, Data::SourceLocationRecord const &sl)
+Bool Lexer::pushChar(U32Char ch, Data::SourceLocationRecord const &sl)
 {
   // Is the input buffer full?
   if (this->inputBuffer.isFull()) {
@@ -270,7 +286,7 @@ Int Lexer::process()
   if (this->currentProcessingIndex >= this->inputBuffer.getCharCount()) return 2;
 
   // Get the processing character.
-  WChar inputChar = this->inputBuffer.getChars()[this->currentProcessingIndex];
+  U32Char inputChar = this->inputBuffer.getChars()[this->currentProcessingIndex];
 
   // Check if this is the first character.
   if (this->currentProcessingIndex == 0) {
@@ -485,7 +501,7 @@ Int Lexer::process()
  *
  * @param inputChar The input character to search against.
  */
-void Lexer::processStartChar(WChar inputChar)
+void Lexer::processStartChar(U32Char inputChar)
 {
   // There must not be any state currently in the stack.
   ASSERT(this->stateCount == 0);
@@ -596,7 +612,7 @@ void Lexer::processStartChar(WChar inputChar)
  *                     Receiving the value of '\0' indicates that there are no
  *                     more characters in the input stream.
  */
-void Lexer::processNextChar(WChar inputChar) {
+void Lexer::processNextChar(U32Char inputChar) {
   // There must be some states currently in the stack.
   ASSERT(this->stateCount != 0);
 
@@ -653,7 +669,7 @@ void Lexer::processNextChar(WChar inputChar) {
  *                        stack that is associated with the current term object.
  * @return Returns a NextAction value telling the caller what to do next.
  */
-Lexer::NextAction Lexer::processState(LexerState *state, WChar inputChar, Int minLevel)
+Lexer::NextAction Lexer::processState(LexerState *state, U32Char inputChar, Int minLevel)
 {
   ASSERT(state != 0);
 
@@ -689,7 +705,7 @@ Lexer::NextAction Lexer::processState(LexerState *state, WChar inputChar, Int mi
 }
 
 
-Lexer::NextAction Lexer::processConstTerm(LexerState *state, WChar inputChar, Int currentLevel)
+Lexer::NextAction Lexer::processConstTerm(LexerState *state, U32Char inputChar, Int currentLevel)
 {
   auto currentTerm = state->refLevel(currentLevel).term;
   ASSERT(currentTerm->isA<Data::Grammar::ConstTerm>());
@@ -718,7 +734,7 @@ Lexer::NextAction Lexer::processConstTerm(LexerState *state, WChar inputChar, In
 }
 
 
-Lexer::NextAction Lexer::processCharGroupTerm(LexerState *state, WChar inputChar, Int currentLevel)
+Lexer::NextAction Lexer::processCharGroupTerm(LexerState *state, U32Char inputChar, Int currentLevel)
 {
   if (state->refLevel(currentLevel).posId == 0) {
     auto currentTerm = state->refLevel(currentLevel).term;
@@ -753,7 +769,7 @@ Lexer::NextAction Lexer::processCharGroupTerm(LexerState *state, WChar inputChar
 }
 
 
-Lexer::NextAction Lexer::processMultiplyTerm(LexerState *state, WChar inputChar, Int currentLevel)
+Lexer::NextAction Lexer::processMultiplyTerm(LexerState *state, U32Char inputChar, Int currentLevel)
 {
   // HOW IT WORKS:
   // The term index of the duplicate term will contain the iteration
@@ -820,7 +836,7 @@ Lexer::NextAction Lexer::processMultiplyTerm(LexerState *state, WChar inputChar,
 }
 
 
-Lexer::NextAction Lexer::processAlternateTerm(LexerState *state, WChar inputChar, Int currentLevel)
+Lexer::NextAction Lexer::processAlternateTerm(LexerState *state, U32Char inputChar, Int currentLevel)
 {
   // HOW IT WORKS:
   // When the parsing reaches the alternative term for the first time
@@ -907,7 +923,7 @@ Lexer::NextAction Lexer::processAlternateTerm(LexerState *state, WChar inputChar
 }
 
 
-Lexer::NextAction Lexer::processConcatTerm(LexerState *state, WChar inputChar, Int currentLevel)
+Lexer::NextAction Lexer::processConcatTerm(LexerState *state, U32Char inputChar, Int currentLevel)
 {
   auto currentTerm = state->refLevel(currentLevel).term;
   ASSERT(currentTerm->isA<Data::Grammar::ConcatTerm>());
@@ -944,7 +960,7 @@ Lexer::NextAction Lexer::processConcatTerm(LexerState *state, WChar inputChar, I
 }
 
 
-Lexer::NextAction Lexer::processReferenceTerm(LexerState *state, WChar inputChar, Int currentLevel)
+Lexer::NextAction Lexer::processReferenceTerm(LexerState *state, U32Char inputChar, Int currentLevel)
 {
   if (state->refLevel(currentLevel).posId == 0) {
     state->refLevel(currentLevel).posId = 1;

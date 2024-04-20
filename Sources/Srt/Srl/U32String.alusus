@@ -1,6 +1,6 @@
 /**
- * @file Srl/WString.alusus
- * Contains the class Srl.WString.
+ * @file Srl/U32String.alusus
+ * Contains the class Srl.U32String.
  *
  * @copyright Copyright (C) 2021 Sarmad Khalid Abdullah
  *
@@ -14,40 +14,40 @@ import "String";
 
 @merge module Srl
 {
-    def WString: alias StringBase[Char];
+    def U32String: alias StringBase[Char];
 
-    @merge class WString {
-        @expname[wcschr]
+    @merge class U32String {
+        @expname[u32_strchr]
         func find(s: ptr[Word], c: Word): ptr[Word];
 
-        @expname[wmemchr]
+        @expname[u32_memchr]
         func find(s: ptr[Word], c: Word, n: ArchInt): ptr[Word];
 
-        @expname[wcsrchr]
+        @expname[u32_strrchr]
         func findLast(s: ptr[Word], c: Word): ptr[Word];
 
-        @expname[wcsstr]
+        @expname[u32_strstr]
         func find(haystack: ptr[Word], needle: ptr[Word]): ptr[Word];
 
-        @expname[wcscmp]
+        @expname[u32_strcmp]
         func compare(s1: ptr[Word], s2: ptr[Word]): Int;
 
-        @expname[wcsncmp]
+        @expname[u32_strncmp]
         func compare(s1: ptr[Word], s2: ptr[Word], n: ArchInt): Int;
 
-        @expname[wcscpy]
+        @expname[u32_strcpy]
         func copy(dest: ptr[Word], src: ptr[Word]): ptr[Word];
 
-        @expname[wcsncpy]
+        @expname[u32_strncpy]
         func copy(dest: ptr[Word], src: ptr[Word], n: ArchInt): ptr[Word];
 
-        @expname[wcscat]
+        @expname[u32_strcat]
         func concat(dest: ptr[Word], src: ptr[Word]): ptr[Word];
 
-        @expname[wcsncat]
+        @expname[u32_strncat]
         func concat(dest: ptr[Word], src: ptr[Word], n: ArchInt): ptr[Word];
 
-        @expname[wcslen]
+        @expname[u32_strlen]
         func getLength(s: ptr[Word]): ArchInt;
 
         // @expname[sprintf]
@@ -56,10 +56,10 @@ import "String";
         @expname[swscanf]
         func scan(source: ptr[Word], format: ptr[Word], args: ...any): Int[32];
 
-        @expname[towupper]
+        @expname[u32_towupper]
         func toUpper(c: Word): Word;
 
-        @expname[towlower]
+        @expname[u32_towlower]
         func toLower(c: Word): Word;
     };
 };

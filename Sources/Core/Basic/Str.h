@@ -38,7 +38,7 @@ class Str : public Srl::String
     this->assign(str, pos, n);
   }
 
-  public: Str(WChar const *str, LongInt pos=0, LongInt n=0)
+  public: Str(U32Char const *str, LongInt pos=0, LongInt n=0)
   {
     this->assign(str, pos, n);
   }
@@ -51,9 +51,9 @@ class Str : public Srl::String
 
   public: void assign(Char const *buf, LongInt pos, LongInt n);
 
-  public: void assign(WChar const *buf, LongInt pos, LongInt n);
+  public: void assign(U32Char const *buf, LongInt pos, LongInt n);
 
-  public: void assign(WChar const *s, Word n=0)
+  public: void assign(U32Char const *s, Word n=0)
   {
     if (n == 0) n = getStrLen(s);
     Char *buffer = reinterpret_cast<Char*>(SALLOC(n*4)); // A UTF8 char may take up to 4 bytes.

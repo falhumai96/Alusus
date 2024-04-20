@@ -15,6 +15,7 @@
 #define CORE_BASIC_BASIC_H
 
 #include "OSAL.hpp"
+#include "strs.h"
 
 namespace Core::Basic
 {
@@ -423,33 +424,33 @@ s_enum(HoldMode, SHARED_REF, WEAK_REF, PLAIN_REF, VALUE);
  * @brief Wrapper for string comparison function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
 Int compareStr(Char const *str1, Char const *str2);
 
 /**
- * @brief Wrapper for wide string comparison function.
+ * @brief Wrapper for UTF-32 string comparison function.
  * @ingroup basic_functions.
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
-Int compareStr(WChar const *str1, WChar const *str2);
+Int compareStr(U32Char const *str1, U32Char const *str2);
 
 /**
  * @brief Wrapper for string comparison function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
 Int compareStr(Char const *str1, Char const *str2, Int size);
 
 /**
- * @brief Wrapper for wide string comparison function.
+ * @brief Wrapper for UTF-32 string comparison function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
-Int compareStr(WChar const *str1, WChar const *str2, Int size);
+Int compareStr(U32Char const *str1, U32Char const *str2, Int size);
 
 /**
  * @brief Compares the end of a string with another string.
@@ -464,7 +465,7 @@ Bool compareStrSuffix(Char const *str, Char const *suffix);
  * @brief Wrapper for string copy function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
 inline void copyStr(Char const *src, Char *dest)
 {
@@ -475,7 +476,7 @@ inline void copyStr(Char const *src, Char *dest)
  * @brief Wrapper for string copy function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
 inline void copyStr(Char const *src, Char *dest, Word size)
 {
@@ -483,32 +484,32 @@ inline void copyStr(Char const *src, Char *dest, Word size)
 }
 
 /**
- * @brief Wrapper for wide string copy function.
+ * @brief Wrapper for UTF-32 string copy function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
-inline void copyStr(WChar const *src, WChar *dest)
+inline void copyStr(U32Char const *src, U32Char *dest)
 {
-    wcscpy(dest, src);
+    u32_strcpy(dest, src);
 }
 
 /**
- * @brief Wrapper for wide string copy function.
+ * @brief Wrapper for UTF-32 string copy function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
-inline void copyStr(WChar const *src, WChar *dest, Word size)
+inline void copyStr(U32Char const *src, U32Char *dest, Word size)
 {
-    wcsncpy(dest, src, size);
+    u32_strncpy(dest, src, size);
 }
 
 /**
  * @brief Wrapper for string length function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
 inline Word getStrLen(Char const *str)
 {
@@ -516,18 +517,18 @@ inline Word getStrLen(Char const *str)
 }
 
 /**
- * @brief Wrapper for wide string length function.
+ * @brief Wrapper for UTF-32 string length function.
  * @ingroup basic_functions
  *
- * The main purpose of this is to support both regular and wide character types.
+ * The main purpose of this is to support both regular and UTF-32 character types.
  */
-inline Word getStrLen(WChar const *str)
+inline Word getStrLen(U32Char const *str)
 {
-    return wcslen(str);
+    return u32_strlen(str);
 }
 
 /**
- * @brief Convert string from utf8 to wide characters.
+ * @brief Convert string from utf8 to UTF-32 characters.
  * @ingroup basic_functions
  *
  * @param input Input utf8 string.
@@ -537,44 +538,44 @@ inline Word getStrLen(WChar const *str)
  * @param processedInputLength Number of input characters processed.
  * @param resultedOutputLength Number of resulting output characters.
  */
-void convertStr(Char const *input, int inputLength, WChar *output, int outputSize, int &processedInputLength, int &resultedOutputLength);
+void convertStr(Char const *input, int inputLength, U32Char *output, int outputSize, int &processedInputLength, int &resultedOutputLength);
 
 /**
- * @brief Convert string from wide characters to utf8.
+ * @brief Convert string from UTF-32 characters to utf8.
  * @ingroup basic_functions
  *
- * @param input Input wide characters string.
+ * @param input Input UTF-32 characters string.
  * @param inputLength Length of input string.
  * @param output Pointer to array to hold the output utf8 results.
  * @param outputSize Size of output array.
  * @param processedInputLength Number of input characters processed.
  * @param resultedOutputLength Number of resulting output characters.
  */
-void convertStr(WChar const *input, int inputLength, Char *output, int outputSize, int &processedInputLength, int &resultedOutputLength);
+void convertStr(U32Char const *input, int inputLength, Char *output, int outputSize, int &processedInputLength, int &resultedOutputLength);
 
 /**
- * @brief Get the wide character for a given UTF8 sequence.
+ * @brief Get the UTF-32 character for a given UTF8 sequence.
  * @ingroup basic_functions
  */
-WChar getWideCharFromUtf8(Char const *s);
+U32Char getWideCharFromUtf8(Char const *s);
 
 /**
- * @brief Get the wide character for a given ASCII character.
+ * @brief Get the UTF-32 character for a given ASCII character.
  * @ingroup basic_functions
  */
-WChar getWideCharFromUtf8(Char c);
+U32Char getWideCharFromUtf8(Char c);
 
 /**
- * @brief Parse a single hex digit from a wide character.
+ * @brief Parse a single hex digit from a UTF-32 character.
  * @ingroup basic functions
  */
-Int parseHexDigit(WChar wc);
+Int parseHexDigit(U32Char wc);
 
 /**
- * @brief Parse a number of hex digits from a wide character string.
+ * @brief Parse a number of hex digits from a UTF-32 character string.
  * @ingroup basic functions
  */
-Int parseHexDigits(WChar const *wc, Word count);
+Int parseHexDigits(U32Char const *wc, Word count);
 
 /// Print 'indents' number of spaces.
 void printIndents(OutStream &stream, int indents);
@@ -641,9 +642,9 @@ SrdRef<T> newSrdObj(ARGS... args) {
 // Headers
 
 #include "SbStr.h"
-#include "SbWStr.h"
+#include "SbU32Str.h"
 #include "Str.h"
-#include "WStr.h"
+#include "U32Str.h"
 
 #include "Logger.h"
 #include "validators.h"
@@ -692,7 +693,7 @@ SrdRef<T> newSrdObj(ARGS... args) {
 
 #include "TiNumber.h"
 #include "TiStr.h"
-#include "TiWStr.h"
+#include "TiU32Str.h"
 #include "TiBool.h"
 #include "TiPtr.h"
 #include "ti_functions.h"

@@ -58,7 +58,7 @@ class TokenizingHandler : public Data::Grammar::BuildHandler
    * @param tokenTextLength The length of the token text.
    * @param sourceLocation The source location at which the token is found.
    */
-  public: virtual void prepareToken(Data::Token *token, Word id, WChar const *tokenText, Word tokenTextLength,
+  public: virtual void prepareToken(Data::Token *token, Word id, U32Char const *tokenText, Word tokenTextLength,
                                     Data::SourceLocationRecord const &sourceLocation)
   {
   }

@@ -46,7 +46,7 @@ void SbStr::append(Char const *str, Word strSize, Word bufferSize)
 }
 
 
-void SbStr::assign(WChar const *str, Word n, Word bufferSize)
+void SbStr::assign(U32Char const *str, Word n, Word bufferSize)
 {
   if (bufferSize < 2) {
     throw EXCEPTION(InvalidArgumentException, S("bufferSize"), S("Buffer size too small."), bufferSize);
@@ -64,7 +64,7 @@ void SbStr::assign(WChar const *str, Word n, Word bufferSize)
 }
 
 
-void SbStr::append(WChar const *str, Word srcSize, Word bufferSize)
+void SbStr::append(U32Char const *str, Word srcSize, Word bufferSize)
 {
   if (str == 0) return;
   if (srcSize == 0) srcSize = getStrLen(str);

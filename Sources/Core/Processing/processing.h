@@ -100,7 +100,7 @@ namespace Core::Processing
  * @param column A reference to the value of the current column. This value
  *               will be replaced with the new column value.
  */
-void computeNextCharPosition(WChar ch, Int &line, Int &column);
+void computeNextCharPosition(U32Char ch, Int &line, Int &column);
 
 
 //==============================================================================

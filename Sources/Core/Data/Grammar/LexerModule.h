@@ -32,7 +32,7 @@ class LexerModule : public Module, public CacheHaving
   //============================================================================
   // Types
 
-  public: typedef std::unordered_map<WChar, std::vector<Int>> CharBasedDecisionCache;
+  public: typedef std::unordered_map<U32Char, std::vector<Int>> CharBasedDecisionCache;
 
 
   //============================================================================

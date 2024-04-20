@@ -1,6 +1,6 @@
 /**
- * @file Core/Basic/WStr.cpp
- * Contains the implementation of class Core::Basic::WStr.
+ * @file Core/Basic/U32Str.cpp
+ * Contains the implementation of class Core::Basic::U32Str.
  *
  * @copyright Copyright (C) 2021 Sarmad Khalid Abdullah
  *
@@ -15,7 +15,7 @@
 namespace Core::Basic
 {
 
-void WStr::assign(Char const *buf, LongInt pos, LongInt n)
+void U32Str::assign(Char const *buf, LongInt pos, LongInt n)
 {
   while (pos-- > 0 && *buf != 0) ++buf;
   if (pos > 0) {
@@ -27,7 +27,7 @@ void WStr::assign(Char const *buf, LongInt pos, LongInt n)
 }
 
 
-void WStr::assign(WChar const *buf, LongInt pos, LongInt n)
+void U32Str::assign(U32Char const *buf, LongInt pos, LongInt n)
 {
   while (pos-- > 0 && *buf != 0) ++buf;
   if (pos > 0) {

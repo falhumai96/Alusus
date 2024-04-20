@@ -12,6 +12,8 @@
 
 #include "core.h"
 
+#include <limits>
+
 namespace Core::Data::Grammar
 {
 
@@ -152,7 +154,7 @@ void StandardFactory::createCharGroupDefinitions()
 
   // AnyChar : char any;
   this->set(S("root.LexerDefs.AnyChar"), CharGroupDefinition::create(
-    SequenceCharGroupUnit::create(WCHAR_MIN, WCHAR_MAX)
+    SequenceCharGroupUnit::create(std::numeric_limits<U32Char>::min(), std::numeric_limits<U32Char>::max())
   ));
 
   // AnyCharNoEs : char !('\\');
@@ -238,9 +240,9 @@ void StandardFactory::createTokenDefinitions()
         }, {
           {S("term"), AlternateTerm::create({}, {
             {S("terms"), List::create({}, {
-              ConstTerm::create({{ S("matchString"), TiWStr(S("u")) }}),
-              ConstTerm::create({{ S("matchString"), TiWStr(S("U")) }}),
-              ConstTerm::create({{ S("matchString"), TiWStr(S("ط")) }})
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("u")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("U")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("ط")) }})
             })}
           })}
         }),
@@ -251,9 +253,9 @@ void StandardFactory::createTokenDefinitions()
             {S("terms"), List::create({}, {
               AlternateTerm::create({}, {
                 {S("terms"), List::create({}, {
-                  ConstTerm::create({{ S("matchString"), TiWStr(S("i")) }}),
-                  ConstTerm::create({{ S("matchString"), TiWStr(S("I")) }}),
-                  ConstTerm::create({{ S("matchString"), TiWStr(S("ص")) }})
+                  ConstTerm::create({{ S("matchString"), TiU32Str(S("i")) }}),
+                  ConstTerm::create({{ S("matchString"), TiU32Str(S("I")) }}),
+                  ConstTerm::create({{ S("matchString"), TiU32Str(S("ص")) }})
                 })}
               }),
               ReferenceTerm::create({{ S("reference"), PARSE_REF(S("module.DecIntLiteral")) }})
@@ -279,9 +281,9 @@ void StandardFactory::createTokenDefinitions()
       {S("terms"), List::create({}, {
         AlternateTerm::create({}, {
           {S("terms"), List::create({}, {
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0b")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0B")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0ن")) }})
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0b")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0B")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0ن")) }})
           })}
         }),
         MultiplyTerm::create({
@@ -299,9 +301,9 @@ void StandardFactory::createTokenDefinitions()
       {S("terms"), List::create({}, {
         AlternateTerm::create({}, {
           {S("terms"), List::create({}, {
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0o")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0O")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0م")) }})
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0o")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0O")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0م")) }})
           })}
         }),
         MultiplyTerm::create({
@@ -319,10 +321,10 @@ void StandardFactory::createTokenDefinitions()
       {S("terms"), List::create({}, {
         AlternateTerm::create({}, {
           {S("terms"), List::create({}, {
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0h")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0H")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0x")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("0X")) }})
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0h")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0H")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0x")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("0X")) }})
           })}
         }),
         MultiplyTerm::create({
@@ -375,7 +377,7 @@ void StandardFactory::createTokenDefinitions()
             MultiplyTerm::create({}, {
               {S("term"), CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.DecDigit")) }})}
             }),
-            ConstTerm::create({{ S("matchString"), TiWStr(S(".")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S(".")) }}),
             MultiplyTerm::create({
               {S("min"), newSrdObj<TiInt>(1)}
             }, {
@@ -403,8 +405,8 @@ void StandardFactory::createTokenDefinitions()
       {S("terms"), List::create({}, {
         AlternateTerm::create({}, {
           {S("terms"), List::create({}, {
-            ConstTerm::create({{ S("matchString"), TiWStr(S("e")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("E")) }})
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("e")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("E")) }})
           })}
         }),
         MultiplyTerm::create({
@@ -412,8 +414,8 @@ void StandardFactory::createTokenDefinitions()
         }, {
           {S("term"), AlternateTerm::create({}, {
             {S("terms"), List::create({}, {
-              ConstTerm::create({{ S("matchString"), TiWStr(S("+")) }}),
-              ConstTerm::create({{ S("matchString"), TiWStr(S("-")) }})
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("+")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("-")) }})
             })}
           })}
         }),
@@ -432,9 +434,9 @@ void StandardFactory::createTokenDefinitions()
       {S("terms"), List::create({}, {
          AlternateTerm::create({}, {
            {S("terms"), List::create({}, {
-              ConstTerm::create({{ S("matchString"), TiWStr(S("f")) }}),
-              ConstTerm::create({{ S("matchString"), TiWStr(S("F")) }}),
-              ConstTerm::create({{ S("matchString"), TiWStr(S("ع")) }})
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("f")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("F")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("ع")) }})
            })}
          }),
          MultiplyTerm::create({}, {
@@ -451,9 +453,9 @@ void StandardFactory::createTokenDefinitions()
   }, {
     {S("term"), ConcatTerm::create({}, {
       {S("terms"), List::create({}, {
-         ConstTerm::create({{ S("matchString"), TiWStr(S("'")) }}),
+         ConstTerm::create({{ S("matchString"), TiU32Str(S("'")) }}),
          ReferenceTerm::create({{ S("reference"), PARSE_REF(S("module.EsCharWithDoubleQuote")) }}),
-         ConstTerm::create({{ S("matchString"), TiWStr(S("'")) }})
+         ConstTerm::create({{ S("matchString"), TiU32Str(S("'")) }})
        })}
     })},
     {S("handler"), this->charLiteralHandler.s_cast<TiObject>()}
@@ -489,11 +491,11 @@ void StandardFactory::createTokenDefinitions()
   this->set(S("root.LexerDefs.StringLiteralPart"), SymbolDefinition::create({}, {
     {S("term"), ConcatTerm::create({}, {
       {S("terms"), List::create({}, {
-        ConstTerm::create({{ S("matchString"), TiWStr(S("\"")) }}),
+        ConstTerm::create({{ S("matchString"), TiU32Str(S("\"")) }}),
         MultiplyTerm::create({}, {
           {S("term"), ReferenceTerm::create({{ S("reference"), PARSE_REF(S("module.EsCharWithSingleQuote")) }})}
         }),
-        ConstTerm::create({{ S("matchString"), TiWStr(S("\"")) }})
+        ConstTerm::create({{ S("matchString"), TiU32Str(S("\"")) }})
       })}
     })}
   }));
@@ -548,25 +550,25 @@ void StandardFactory::createTokenDefinitions()
   this->set(S("root.LexerDefs.EsSequence"), SymbolDefinition::create({}, {
     {S("term"), ConcatTerm::create({}, {
       {S("terms"), List::create({}, {
-        ConstTerm::create({{ S("matchString"), TiWStr(S("\\")) }}),
+        ConstTerm::create({{ S("matchString"), TiU32Str(S("\\")) }}),
         AlternateTerm::create({}, {
           {S("terms"), List::create({}, {
-            ConstTerm::create({{ S("matchString"), TiWStr(S("\\")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("\"")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("'")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("n")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("t")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("f")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("r")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("ج")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("ت")) }}),
-            ConstTerm::create({{ S("matchString"), TiWStr(S("ر")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("\\")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("\"")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("'")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("n")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("t")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("f")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("r")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("ج")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("ت")) }}),
+            ConstTerm::create({{ S("matchString"), TiU32Str(S("ر")) }}),
             ConcatTerm::create({}, {
               {S("terms"), List::create({}, {
                 AlternateTerm::create({}, {
                   {S("terms"), List::create({}, {
-                    ConstTerm::create({{ S("matchString"), TiWStr(S("h")) }}),
-                    ConstTerm::create({{ S("matchString"), TiWStr(S("x")) }})
+                    ConstTerm::create({{ S("matchString"), TiU32Str(S("h")) }}),
+                    ConstTerm::create({{ S("matchString"), TiU32Str(S("x")) }})
                   })}
                 }),
                 CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
@@ -575,7 +577,7 @@ void StandardFactory::createTokenDefinitions()
             }),
             ConcatTerm::create({}, {
               {S("terms"), List::create({}, {
-                  ConstTerm::create({{ S("matchString"), TiWStr(S("u")) }}),
+                  ConstTerm::create({{ S("matchString"), TiU32Str(S("u")) }}),
                   CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
                   CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
                   CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
@@ -584,7 +586,7 @@ void StandardFactory::createTokenDefinitions()
             }),
             ConcatTerm::create({}, {
               {S("terms"), List::create({}, {
-                  ConstTerm::create({{ S("matchString"), TiWStr(S("U")) }}),
+                  ConstTerm::create({{ S("matchString"), TiU32Str(S("U")) }}),
                   CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
                   CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
                   CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.HexDigit")) }}),
@@ -625,14 +627,14 @@ void StandardFactory::createTokenDefinitions()
       {S("terms"), List::create({}, {
          AlternateTerm::create({}, {
            {S("terms"), List::create({}, {
-              ConstTerm::create({{ S("matchString"), TiWStr(S("//")) }}),
-              ConstTerm::create({{ S("matchString"), TiWStr(S("#")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("//")) }}),
+              ConstTerm::create({{ S("matchString"), TiU32Str(S("#")) }}),
            })}
          }),
          MultiplyTerm::create({}, {
            {S("term"), CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.AnyCharNoReturn")) }})}
          }),
-         ConstTerm::create({{ S("matchString"), TiWStr(S("\n")) }})
+         ConstTerm::create({{ S("matchString"), TiU32Str(S("\n")) }})
        })}
     })}
   }));
@@ -643,11 +645,11 @@ void StandardFactory::createTokenDefinitions()
   }, {
     {S("term"), ConcatTerm::create({}, {
       {S("terms"), List::create({}, {
-         ConstTerm::create({{ S("matchString"), TiWStr(S("/*")) }}),
+         ConstTerm::create({{ S("matchString"), TiU32Str(S("/*")) }}),
          MultiplyTerm::create({}, {
            {S("term"), CharGroupTerm::create({{ S("charGroupReference"), PARSE_REF(S("module.AnyChar")) }})}
          }),
-         ConstTerm::create({{ S("matchString"), TiWStr(S("*/")) }})
+         ConstTerm::create({{ S("matchString"), TiU32Str(S("*/")) }})
        })}
     })}
   }));
@@ -1896,13 +1898,13 @@ SharedPtr<SymbolDefinition> StandardFactory::createConstTokenDef(Char const *tex
     return SymbolDefinition::create({
       {S("flags"), TiInt::create(SymbolFlags::ROOT_TOKEN)}
     }, {
-      {S("term"), ConstTerm::create({{ S("matchString"), TiWStr(text) }})}
+      {S("term"), ConstTerm::create({{ S("matchString"), TiU32Str(text) }})}
     });
   } else {
     return SymbolDefinition::create({
       {S("flags"), TiInt::create(SymbolFlags::ROOT_TOKEN)}
     }, {
-      {S("term"), ConstTerm::create({{ S("matchString"), TiWStr(text) }})},
+      {S("term"), ConstTerm::create({{ S("matchString"), TiU32Str(text) }})},
       {S("handler"), this->constTokenHandler}
     });
   }

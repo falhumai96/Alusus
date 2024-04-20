@@ -27,7 +27,7 @@ void Str::assign(Char const *buf, LongInt pos, LongInt n)
 }
 
 
-void Str::assign(WChar const *buf, LongInt pos, LongInt n)
+void Str::assign(U32Char const *buf, LongInt pos, LongInt n)
 {
   while (pos-- > 0 && *buf != 0) ++buf;
   if (pos > 0) {

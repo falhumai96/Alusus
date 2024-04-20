@@ -105,11 +105,11 @@ class Token : public Node
   }
 
   /**
-   * Set the token text from a wide character string.
+   * Set the token text from a UTF-32 character string.
    *
    * @param t A pointer to a string containing the token text.
    */
-  public: void setText(WChar const *t)
+  public: void setText(U32Char const *t)
   {
     this->text.assign(t);
   }
@@ -126,12 +126,12 @@ class Token : public Node
   }
 
   /**
-   * Set the token text from a wide character string.
+   * Set the token text from a UTF-32 character string.
    *
    * @param t A pointer to a string containing the token text.
    * @param s The size of the string.
    */
-  public: void setText(WChar const *t, Int s)
+  public: void setText(U32Char const *t, Int s)
   {
     this->text.assign(t, s);
   }

@@ -56,7 +56,7 @@ class ConstTokenizingHandler : public TokenizingHandler
     return this->id;
   }
 
-  public: virtual void prepareToken(Data::Token *token, Word id, WChar const *tokenText, Word tokenTextLength,
+  public: virtual void prepareToken(Data::Token *token, Word id, U32Char const *tokenText, Word tokenTextLength,
                                     Data::SourceLocationRecord const &sourceLocation)
   {
     token->setText(tokenText, tokenTextLength);

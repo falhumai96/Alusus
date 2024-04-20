@@ -36,14 +36,14 @@ class ConstTerm : public Term
   // Member Variables
 
   /// A pointer to the string constant to be matched with input characters.
-  private: TiWStr matchString;
+  private: TiU32Str matchString;
 
 
   //============================================================================
   // Implementations
 
   IMPLEMENT_BINDING(Term,
-    (matchString, TiWStr, VALUE, setMatchString(value), &matchString)
+    (matchString, TiU32Str, VALUE, setMatchString(value), &matchString)
   );
 
 
@@ -74,27 +74,27 @@ class ConstTerm : public Term
     if (str == 0) {
       throw EXCEPTION(InvalidArgumentException, S("str"), S("Argument should not be null."), str);
     }
-    if (this->matchString.getWStr().getLength() > 0) {
+    if (this->matchString.getU32Str().getLength() > 0) {
       throw EXCEPTION(GenericException, S("Modifying an already set match string is not allowed."));
     }
     this->matchString = str;
   }
 
-  public: void setMatchString(TiWStr *str)
+  public: void setMatchString(TiU32Str *str)
   {
     if (str == 0) {
       throw EXCEPTION(InvalidArgumentException, S("str"), S("Argument should not be null."), str);
     }
-    if (this->matchString.getWStr().getLength() > 0) {
+    if (this->matchString.getU32Str().getLength() > 0) {
       throw EXCEPTION(GenericException, S("Modifying an already set match string is not allowed."));
     }
     this->matchString = *str;
   }
 
   /// Get the match string.
-  public: WStr const& getMatchString() const
+  public: U32Str const& getMatchString() const
   {
-    return this->matchString.getWStr();
+    return this->matchString.getU32Str();
   }
 
 }; // class

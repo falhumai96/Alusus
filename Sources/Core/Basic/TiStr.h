@@ -54,7 +54,7 @@ template <class P> class TiStrBase : public P
   {
   }
 
-  public: TiStrBase(WChar const *v, Word c) : value(v, c)
+  public: TiStrBase(U32Char const *v, Word c) : value(v, c)
   {
   }
 
@@ -68,7 +68,7 @@ template <class P> class TiStrBase : public P
     return newSrdObj<TiStrBase<P>>(v, c);
   }
 
-  public: static SharedPtr<TiStrBase<P>> create(WChar const *v, Word c)
+  public: static SharedPtr<TiStrBase<P>> create(U32Char const *v, Word c)
   {
     return newSrdObj<TiStrBase<P>>(v, c);
   }
@@ -95,7 +95,7 @@ template <class P> class TiStrBase : public P
     return *this;
   }
 
-  public: TiStrBase<P>& operator=(WChar const *v)
+  public: TiStrBase<P>& operator=(U32Char const *v)
   {
     this->value = v;
     return *this;

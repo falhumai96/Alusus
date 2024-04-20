@@ -20,7 +20,7 @@ namespace Core::Processing::Handlers
 // Overloaded Abstract Functions
 
 void IdentifierTokenizingHandler::prepareToken(
-  Data::Token *token, Word id, WChar const *tokenText, Word tokenTextLength,
+  Data::Token *token, Word id, U32Char const *tokenText, Word tokenTextLength,
   Data::SourceLocationRecord const &sourceLocation
 ) {
   token->setText(tokenText, tokenTextLength);

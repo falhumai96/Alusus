@@ -8,7 +8,6 @@ project(AlususSrl)
 cmake_minimum_required(VERSION 3.20.0)
 
 # Make sure the compiler finds the source files.
-include_directories("${AlususSrl_SOURCE_DIR}")
 set(CMAKE_MODULE_PATH "${AlususSrl_SOURCE_DIR}")
 
 # Add a target for Alusus SRL library.
@@ -30,6 +29,8 @@ set_target_properties(AlususSrlLib PROPERTIES
   DEBUG_OUTPUT_NAME alusus_srl.dbg
   VERSION ${AlususVersion}
 )
+target_include_directories(AlususSrlLib PRIVATE "${AlususSrl_SOURCE_DIR}")
+target_include_directories(AlususSrlLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_precompile_headers(AlususSrlLib PRIVATE "srl.h")
 
 # Copy libary header files to installation directory.

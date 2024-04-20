@@ -95,19 +95,19 @@ class SbStr
 
   /// @}
 
-  /// @name Wide Character Assigning Functions
+  /// @name UTF-32 Character Assigning Functions
   /// @{
 
-  public: void assign(WChar const *str, Word n, Word bufferSize);
+  public: void assign(U32Char const *str, Word n, Word bufferSize);
 
-  public: void assign(WChar const *str, Word bufferSize)
+  public: void assign(U32Char const *str, Word bufferSize)
   {
     this->assign(str, getStrLen(str), bufferSize);
   }
 
-  public: void append(WChar const *str, Word src_size, Word bufferSize);
+  public: void append(U32Char const *str, Word src_size, Word bufferSize);
 
-  public: void append(WChar const *str, Word bufferSize)
+  public: void append(U32Char const *str, Word bufferSize)
   {
     this->append(str, getStrLen(str), bufferSize);
   }

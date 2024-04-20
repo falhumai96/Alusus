@@ -89,7 +89,7 @@ Module* getGrammarRoot(DynamicContaining<TiObject> *rootScope, Bool createIfMiss
 }
 
 
-Bool matchCharGroup(WChar ch, CharGroupUnit *unit)
+Bool matchCharGroup(U32Char ch, CharGroupUnit *unit)
 {
   ASSERT(unit);
 

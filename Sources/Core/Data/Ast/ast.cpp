@@ -260,10 +260,10 @@ Bool isEqual(TiObject *obj1, TiObject *obj2)
     auto tiStr1 = static_cast<TiStr*>(obj1);
     auto tiStr2 = static_cast<TiStr*>(obj2);
     return tiStr1->getStr() == tiStr2->getStr();
-  } else if (obj1->isDerivedFrom<TiWStr>()) {
-    auto tiStr1 = static_cast<TiWStr*>(obj1);
-    auto tiStr2 = static_cast<TiWStr*>(obj2);
-    return tiStr1->getWStr() == tiStr2->getWStr();
+  } else if (obj1->isDerivedFrom<TiU32Str>()) {
+    auto tiStr1 = static_cast<TiU32Str*>(obj1);
+    auto tiStr2 = static_cast<TiU32Str*>(obj2);
+    return tiStr1->getU32Str() == tiStr2->getU32Str();
   }
 
   // Check class properties.

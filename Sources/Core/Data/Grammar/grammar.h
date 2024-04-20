@@ -111,7 +111,7 @@ Module* getGrammarRoot(DynamicContaining<TiObject> *rootScope, Bool createIfMiss
  *             object can be a the head of a tree of CharGroupUnit objects.
  * @return Returns true if the character matches, false otherwise.
  */
-Bool matchCharGroup(WChar ch, CharGroupUnit *unit);
+Bool matchCharGroup(U32Char ch, CharGroupUnit *unit);
 
 /**
  * @brief Set the IDs of all elements in a given tree.

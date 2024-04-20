@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <wchar.h>
 #include <ctype.h>
 #include <wctype.h>
 #include <exception>
@@ -39,7 +38,7 @@ typedef unsigned char Byte;
 typedef char Char;
 
 /// @ingroup srl
-typedef wchar_t WChar;
+typedef char32_t U32Char;
 
 /// @ingroup srl
 typedef int Int;
@@ -109,7 +108,7 @@ typedef uintptr_t PtrWord;
 #define C(x)	u8##x
 
 /**
- * @brief Wrapper for wide character literals.
+ * @brief Wrapper for UTF-32 character literals.
  * @ingroup srl
  */
 #define WC(x) U##x

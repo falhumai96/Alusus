@@ -79,8 +79,22 @@ class Lexer : public TiObject
   private: Word nextStateCount = 0;
   private: LexerState **recycledStates = 0;
   private: Word recycledStateCount = 0;
-  private: Word currentWChar = 0;
-  private: Word remainingChars = 0;
+  // private: Word currentU32Char = 0;
+  // private: Word remainingChars = 0;
+
+
+  /**
+   * @brief A temporary buffer used to buffer byte characters for conversion.
+   * This buffer is used to buffer the received byte characters when multi
+   * byte sequences are received.
+   */
+  private: Char tempByteCharBuffer[4];
+
+  /**
+   * @brief Current count of bytes in tempByteCharBuffer.
+   * @sa tempByteCharBuffer
+   */
+  private: Word tempByteCharCount;
 
 
   /**
@@ -153,6 +167,7 @@ class Lexer : public TiObject
 
   public: Lexer() :
     errorBuffer(S(""), 0),
+    tempByteCharCount(0),
     currentProcessingIndex(0),
     currentTokenClamped(false)
   {
@@ -196,26 +211,26 @@ class Lexer : public TiObject
   private: void processBuffer();
 
   /// Push a character into the input buffer.
-  private: Bool pushChar(WChar ch, Data::SourceLocationRecord const &sl);
+  private: Bool pushChar(U32Char ch, Data::SourceLocationRecord const &sl);
 
   /// Process the given input character by updating the states.
   private: Int process();
 
   /// Process the first character in the token.
-  private: void processStartChar(WChar inputChar);
+  private: void processStartChar(U32Char inputChar);
 
   /// Process the next character in the token.
-  private: void processNextChar(WChar inputChar);
+  private: void processNextChar(U32Char inputChar);
 
   /// Recursively apply the given character on the temp state.
-  private: NextAction processState(LexerState *state, WChar inputChar, Int minLevel = 0);
+  private: NextAction processState(LexerState *state, U32Char inputChar, Int minLevel = 0);
 
-  private: Lexer::NextAction processConstTerm(LexerState *state, WChar inputChar, Int currentLevel);
-  private: Lexer::NextAction processCharGroupTerm(LexerState *state, WChar inputChar, Int currentLevel);
-  private: Lexer::NextAction processMultiplyTerm(LexerState *state, WChar inputChar, Int currentLevel);
-  private: Lexer::NextAction processAlternateTerm(LexerState *state, WChar inputChar, Int currentLevel);
-  private: Lexer::NextAction processConcatTerm(LexerState *state, WChar inputChar, Int currentLevel);
-  private: Lexer::NextAction processReferenceTerm(LexerState *state, WChar inputChar, Int currentLevel);
+  private: Lexer::NextAction processConstTerm(LexerState *state, U32Char inputChar, Int currentLevel);
+  private: Lexer::NextAction processCharGroupTerm(LexerState *state, U32Char inputChar, Int currentLevel);
+  private: Lexer::NextAction processMultiplyTerm(LexerState *state, U32Char inputChar, Int currentLevel);
+  private: Lexer::NextAction processAlternateTerm(LexerState *state, U32Char inputChar, Int currentLevel);
+  private: Lexer::NextAction processConcatTerm(LexerState *state, U32Char inputChar, Int currentLevel);
+  private: Lexer::NextAction processReferenceTerm(LexerState *state, U32Char inputChar, Int currentLevel);
 
   /// Select the best token among the detected tokens.
   private: Int selectBestToken();

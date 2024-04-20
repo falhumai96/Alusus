@@ -1,6 +1,6 @@
 /**
- * @file Core/Basic/TiWStr.h
- * Contains the header of class Core::Basic::TiWStr.
+ * @file Core/Basic/TiU32Str.h
+ * Contains the header of class Core::Basic::TiU32Str.
  *
  * @copyright Copyright (C) 2021 Sarmad Khalid Abdullah
  *
@@ -10,8 +10,8 @@
  */
 //==============================================================================
 
-#ifndef CORE_BASIC_TIWSTR_H
-#define CORE_BASIC_TIWSTR_H
+#ifndef CORE_BASIC_TIU32STR_H
+#define CORE_BASIC_TIU32STR_H
 
 namespace Core::Basic
 {
@@ -20,118 +20,118 @@ namespace Core::Basic
  * @brief An identifiable object that holds a string value.
  * @ingroup basic_datatypes
  */
-template <class P> class TiWStrBase : public P
+template <class P> class TiU32StrBase : public P
 {
   //============================================================================
   // Type Info
 
-  TEMPLATE_TYPE_INFO(TiWStrBase, P, "Core.Data", "Core", "alusus.org", (P));
-  OBJECT_FACTORY(TiWStrBase<P>);
+  TEMPLATE_TYPE_INFO(TiU32StrBase, P, "Core.Data", "Core", "alusus.org", (P));
+  OBJECT_FACTORY(TiU32StrBase<P>);
 
 
   //============================================================================
   // Member Variables
 
-  private: WStr value;
+  private: U32Str value;
 
 
   //============================================================================
   // Constructors
 
-  public: TiWStrBase()
+  public: TiU32StrBase()
   {
   }
 
-  public: TiWStrBase(WChar const *v) : value(v)
+  public: TiU32StrBase(U32Char const *v) : value(v)
   {
   }
 
-  public: TiWStrBase(WChar const *v, Word c) : value(v, c)
+  public: TiU32StrBase(U32Char const *v, Word c) : value(v, c)
   {
   }
 
-  public: TiWStrBase(Char const *v, Word c = 0) : value(v, c)
+  public: TiU32StrBase(Char const *v, Word c = 0) : value(v, c)
   {
   }
 
-  public: static SharedPtr<TiWStrBase<P>> create(WChar const *v)
+  public: static SharedPtr<TiU32StrBase<P>> create(U32Char const *v)
   {
-    return newSrdObj<TiWStrBase<P>>(v);
+    return newSrdObj<TiU32StrBase<P>>(v);
   }
 
-  public: static SharedPtr<TiWStrBase<P>> create(WChar const *v, Word c)
+  public: static SharedPtr<TiU32StrBase<P>> create(U32Char const *v, Word c)
   {
-    return newSrdObj<TiWStrBase<P>>(v, c);
+    return newSrdObj<TiU32StrBase<P>>(v, c);
   }
 
-  public: static SharedPtr<TiWStrBase<P>> create(Char const *v, Word c)
+  public: static SharedPtr<TiU32StrBase<P>> create(Char const *v, Word c)
   {
-    return newSrdObj<TiWStrBase<P>>(v, c);
+    return newSrdObj<TiU32StrBase<P>>(v, c);
   }
 
 
   //============================================================================
   // Operators
 
-  public: TiWStrBase<P>& operator=(TiWStrBase<P> const &v)
+  public: TiU32StrBase<P>& operator=(TiU32StrBase<P> const &v)
   {
     this->value = v.value;
     return *this;
   }
 
-  public: TiWStrBase<P>& operator=(WChar const *v)
+  public: TiU32StrBase<P>& operator=(U32Char const *v)
   {
     this->value = v;
     return *this;
   }
 
-  public: TiWStrBase<P>& operator=(Char const *v)
+  public: TiU32StrBase<P>& operator=(Char const *v)
   {
     this->value = v;
     return *this;
   }
 
-  public: operator WChar const*() const
+  public: operator U32Char const*() const
   {
     return this->value;
   }
 
-  public: Bool operator==(TiWStrBase<P> const &s) const
+  public: Bool operator==(TiU32StrBase<P> const &s) const
   {
     return this->value.compare(s.value) == 0;
   }
 
-  public: Bool operator==(WChar const *s) const
+  public: Bool operator==(U32Char const *s) const
   {
     return this->value.compare(s) == 0;
   }
 
-  public: Bool operator!=(TiWStrBase<P> const &s) const
+  public: Bool operator!=(TiU32StrBase<P> const &s) const
   {
     return this->value.compare(s.value) != 0;
   }
 
-  public: Bool operator!=(WChar const *s) const
+  public: Bool operator!=(U32Char const *s) const
   {
     return this->value.compare(s) != 0;
   }
 
-  public: Bool operator>(TiWStrBase<P> const &s) const
+  public: Bool operator>(TiU32StrBase<P> const &s) const
   {
     return this->value.compare(s.value) > 0;
   }
 
-  public: Bool operator>(WChar const *s) const
+  public: Bool operator>(U32Char const *s) const
   {
     return this->value.compare(s) > 0;
   }
 
-  public: Bool operator<(TiWStrBase<P> const &s) const
+  public: Bool operator<(TiU32StrBase<P> const &s) const
   {
     return this->value.compare(s.value) < 0;
   }
 
-  public: Bool operator<(WChar const *s) const
+  public: Bool operator<(U32Char const *s) const
   {
     return this->value.compare(s) < 0;
   }
@@ -140,22 +140,22 @@ template <class P> class TiWStrBase : public P
   //============================================================================
   // Member Functions
 
-  public: void set(WChar const *v)
+  public: void set(U32Char const *v)
   {
     this->value = v;
   }
 
-  public: void set(WChar const *v, Word c)
+  public: void set(U32Char const *v, Word c)
   {
     this->value.assign(v, c);
   }
 
-  public: WChar const* get() const
+  public: U32Char const* get() const
   {
     return this->value;
   }
 
-  public: WStr const& getWStr() const
+  public: U32Str const& getU32Str() const
   {
     return this->value;
   }
@@ -166,7 +166,7 @@ template <class P> class TiWStrBase : public P
 //==============================================================================
 // Typedefs
 
-typedef TiWStrBase<TiObject> TiWStr;
+typedef TiU32StrBase<TiObject> TiU32Str;
 
 } // namespace
 

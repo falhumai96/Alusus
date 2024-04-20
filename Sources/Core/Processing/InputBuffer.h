@@ -56,7 +56,7 @@ class InputBuffer
    *
    * This string contains the list of characters in the buffer.
    */
-  private: std::wstring charBuffer;
+  private: std::u32string charBuffer;
 
   /**
    * @brief Manages the positions of characters in the source code.
@@ -92,7 +92,7 @@ class InputBuffer
   /// @{
 
   /// Push a new character to the end of the buffer.
-  public: Bool push(WChar ch, Data::SourceLocationRecord const &sl, Bool force=false);
+  public: Bool push(U32Char ch, Data::SourceLocationRecord const &sl, Bool force=false);
 
   /// Remove a group of characters from the beginning of the buffer.
   public: void remove(Int count);
@@ -109,7 +109,7 @@ class InputBuffer
   /// @{
 
   /// Get a pointer to the characters stored in the buffer.
-  public: WChar const* getChars()
+  public: U32Char const* getChars()
   {
     return this->charBuffer.c_str();
   }

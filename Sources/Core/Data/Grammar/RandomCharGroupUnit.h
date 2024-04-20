@@ -39,7 +39,7 @@ class RandomCharGroupUnit : public CharGroupUnit
    * The string is only used as an array of characters and do not actually
    * represent a string.
    */
-  private: WStr charList;
+  private: U32Str charList;
 
 
   //============================================================================
@@ -83,7 +83,7 @@ class RandomCharGroupUnit : public CharGroupUnit
    * @brief Get a pointer to the list of characters in the group.
    * @return Returns a pointer to an array of characters.
    */
-  public: WChar const* getCharList() const
+  public: U32Char const* getCharList() const
   {
     return this->charList;
   }
