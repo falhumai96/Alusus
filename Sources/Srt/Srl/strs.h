@@ -506,13 +506,10 @@ template<class T> class StringBase
 //==============================================================================
 // Function Specializations
 
-// Convert a UTF-32 string to a UTF-8 string
 std::string utf32_to_utf8(const std::u32string &utf32);
 
-// Convert a UTF-8 string to a UTF-32 string
 std::u32string utf8_to_utf32(const std::string &utf8);
 
-// A swprintf-like function for char32_t strings
 int u32_snprintf(char32_t *buffer, size_t size, const char32_t *format, ...);
 
 const char32_t* u32_strchr(const char32_t* str, char32_t ch);

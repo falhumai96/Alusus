@@ -27,7 +27,7 @@
 namespace Srl
 {
 
-static std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> u32Converter;
+static std::wstring_convert<std::codecvt_utf8<U32Char>, U32Char> u32Converter;
 
 // Convert a UTF-32 string to a UTF-8 string
 std::string utf32_to_utf8(const std::u32string& utf32) {
@@ -63,7 +63,7 @@ std::u32string utf8_to_utf32(const std::string& utf8) {
   // Possible code for migrating from C++17.
   // std::u32string utf32;
   // for (size_t i = 0; i < utf8.size(); ) {
-  //   char32_t cp;
+  //   U32Char cp;
   //   if ((utf8[i] & 0x80) == 0) {
   //     cp = utf8[i];
   //     ++i;
@@ -90,23 +90,72 @@ std::u32string utf8_to_utf32(const std::string& utf8) {
   return u32Converter.from_bytes(utf8.c_str());
 }
 
-// A swprintf-like function for char32_t strings
-int u32_snprintf(char32_t* buffer, size_t size, const char32_t* format, ...) {
-  if (!buffer || !size || !*buffer || !format || !*format) {
+// A sprintf-like function for U32Char strings
+int u32_sprintf(U32Char* buffer, const U32Char* format, ...) {
+  if (!format || !*format) {
     return 0;
   }
 
-  // Convert char32_t to std::string using utf32_to_utf8
+  // Convert U32Char to std::string using utf32_to_utf8
   std::string str_format;
   try {
     str_format = utf32_to_utf8(format);
-  } catch (...) {
+  }
+  catch (...) {
+    errno = EILSEQ;
+    return -1;
+  }
+
+  // Use vsnprintf to get the required size
+  va_list args;
+  va_start(args, format);
+  int required_size = vsnprintf(nullptr, 0, str_format.c_str(), args) + 1; // +1 for null-terminator
+  va_end(args);
+
+  // Prepare a buffer for vsprintf
+  std::vector<Char> str_buffer(required_size, 0); // Initialize with required size and fill with 0
+
+  // Use vsprintf to format the string
+  va_start(args, format);
+  int result = vsprintf((Char*)str_buffer.data(), str_format.c_str(), args);
+  va_end(args);
+
+  // Convert std::string back to U32Char using utf8_to_utf32
+  std::u32string u32_buffer;
+  try {
+    u32_buffer = utf8_to_utf32((Char*)str_buffer.data());
+  }
+  catch (...) {
+    errno = EILSEQ;
+    return -1;
+  }
+
+  if (buffer) {
+    // Copy to the original buffer
+    std::copy(u32_buffer.begin(), u32_buffer.end(), buffer);
+  }
+
+  return result;
+}
+
+// A snprintf-like function for U32Char strings
+int u32_snprintf(U32Char* buffer, size_t size, const U32Char* format, ...) {
+  if (!size || !format || !*format) {
+    return 0;
+  }
+
+  // Convert U32Char to std::string using utf32_to_utf8
+  std::string str_format;
+  try {
+    str_format = utf32_to_utf8(format);
+  }
+  catch (...) {
     errno = EILSEQ;
     return -1;
   }
 
   // Prepare a buffer for vsnprintf
-  std::vector<char> str_buffer(size);
+  std::vector<char> str_buffer(size + 1);
 
   // Use vsnprintf to format the string
   va_list args;
@@ -114,22 +163,25 @@ int u32_snprintf(char32_t* buffer, size_t size, const char32_t* format, ...) {
   int result = vsnprintf(str_buffer.data(), size, str_format.c_str(), args);
   va_end(args);
 
-  // Convert std::string back to char32_t using utf8_to_utf32
+  // Convert std::string back to U32Char using utf8_to_utf32
   std::u32string u32_buffer;
   try {
     u32_buffer = utf8_to_utf32(str_buffer.data());
-  } catch (...) {
+  }
+  catch (...) {
     errno = EILSEQ;
     return -1;
   }
 
-  // Copy to the original buffer
-  std::copy(u32_buffer.begin(), u32_buffer.end(), buffer);
+  if (buffer) {
+    // Copy to the original buffer
+    std::copy(u32_buffer.begin(), u32_buffer.end(), buffer);
+  }
 
   return result;
 }
 
-const char32_t* u32_strchr(const char32_t* str, char32_t ch) {
+const U32Char* u32_strchr(const U32Char* str, U32Char ch) {
   if (!str) {
     return nullptr;
   }
@@ -146,7 +198,7 @@ const char32_t* u32_strchr(const char32_t* str, char32_t ch) {
   return nullptr;
 }
 
-const char32_t* u32_memchr(const char32_t* ptr, char32_t ch, size_t count) {
+const U32Char* u32_memchr(const U32Char* ptr, U32Char ch, size_t count) {
   if (!ptr || !*ptr || !count) {
     return nullptr;
   }
@@ -161,7 +213,7 @@ const char32_t* u32_memchr(const char32_t* ptr, char32_t ch, size_t count) {
   return nullptr;
 }
 
-const char32_t* u32_strstr(const char32_t* str, const char32_t* substr) {
+const U32Char* u32_strstr(const U32Char* str, const U32Char* substr) {
   if (!str || !substr || !*str || !*substr) {
     return nullptr;
   }
@@ -169,8 +221,8 @@ const char32_t* u32_strstr(const char32_t* str, const char32_t* substr) {
   if (!*substr)
     return str;
   for (; *str; ++str) {
-    const char32_t* h = str;
-    const char32_t* n = substr;
+    const U32Char* h = str;
+    const U32Char* n = substr;
     while (*h && *n && *h == *n) {
       ++h;
       ++n;
@@ -181,7 +233,7 @@ const char32_t* u32_strstr(const char32_t* str, const char32_t* substr) {
   return nullptr;
 }
 
-const char32_t* u32_strrchr(const char32_t* str, char32_t ch) {
+const U32Char* u32_strrchr(const U32Char* str, U32Char ch) {
   if (!str || !*str) {
     return nullptr;
   }
@@ -189,7 +241,7 @@ const char32_t* u32_strrchr(const char32_t* str, char32_t ch) {
   if (ch == U'\0')
     return str;
 
-  const char32_t* last_occurrence = nullptr;
+  const U32Char* last_occurrence = nullptr;
   while (*str != U'\0') {
     if (*str == ch)
       last_occurrence = str;
@@ -201,15 +253,15 @@ const char32_t* u32_strrchr(const char32_t* str, char32_t ch) {
 }
 
 // here
-int u32_strcmp(const char32_t* str1, const char32_t* str2) {
+int u32_strcmp(const U32Char* str1, const U32Char* str2) {
   while (*str1 && *str2 && (*str1 == *str2)) {
     ++str1;
     ++str2;
   }
-  return *(char32_t*)str1 - *(char32_t*)str2;
+  return *(U32Char*)str1 - *(U32Char*)str2;
 }
 
-int u32_strncmp(const char32_t* str1, const char32_t* str2, size_t count) {
+int u32_strncmp(const U32Char* str1, const U32Char* str2, size_t count) {
   while (count && *str1 && *str2 && (*str1 == *str2)) {
     ++str1;
     ++str2;
@@ -220,17 +272,17 @@ int u32_strncmp(const char32_t* str1, const char32_t* str2, size_t count) {
     return 0;
   }
 
-  return *(char32_t*)str1 - *(char32_t*)str2;
+  return *(U32Char*)str1 - *(U32Char*)str2;
 }
 
-char32_t* u32_strcpy(char32_t* dest, const char32_t* src) {
-  char32_t* original_dest = dest;
+U32Char* u32_strcpy(U32Char* dest, const U32Char* src) {
+  U32Char* original_dest = dest;
   while ((*dest++ = *src++));
   return original_dest;
 }
 
-char32_t* u32_strncpy(char32_t* dest, const char32_t* src, size_t count) {
-  char32_t* original_dest = dest;
+U32Char* u32_strncpy(U32Char* dest, const U32Char* src, size_t count) {
+  U32Char* original_dest = dest;
   while (count > 0 && *src != U'\0') {
     *dest = *src;
     dest++;
@@ -248,8 +300,8 @@ char32_t* u32_strncpy(char32_t* dest, const char32_t* src, size_t count) {
   return original_dest;
 }
 
-char32_t* u32_strcat(char32_t* dest, const char32_t* src) {
-  char32_t* original_dest = dest;
+U32Char* u32_strcat(U32Char* dest, const U32Char* src) {
+  U32Char* original_dest = dest;
 
   while (*dest)
     ++dest;
@@ -259,8 +311,8 @@ char32_t* u32_strcat(char32_t* dest, const char32_t* src) {
   return original_dest;
 }
 
-char32_t* u32_strncat(char32_t* dest, const char32_t* src, size_t count) {
-  char32_t* original_dest = dest;
+U32Char* u32_strncat(U32Char* dest, const U32Char* src, size_t count) {
+  U32Char* original_dest = dest;
   
   if (!count) {
     return original_dest;
@@ -278,7 +330,7 @@ char32_t* u32_strncat(char32_t* dest, const char32_t* src, size_t count) {
   return original_dest;
 }
 
-size_t u32_strlen(const char32_t* str) {
+size_t u32_strlen(const U32Char* str) {
   if (!str || !*str) {
     return 0;
   }
@@ -291,7 +343,7 @@ size_t u32_strlen(const char32_t* str) {
   return length;
 }
 
-char32_t u32_towupper(char32_t ch) {
+U32Char u32_towupper(U32Char ch) {
   // This is a simple implementation that only works for ASCII characters.
   // A full implementation would require a Unicode character database.
   if (ch >= U'a' && ch <= U'z')
@@ -299,7 +351,7 @@ char32_t u32_towupper(char32_t ch) {
   return ch;
 }
 
-char32_t u32_towlower(char32_t ch) {
+U32Char u32_towlower(U32Char ch) {
   // This is a simple implementation that only works for ASCII characters.
   // A full implementation would require a Unicode character database.
   if (ch >= U'A' && ch <= U'Z')
