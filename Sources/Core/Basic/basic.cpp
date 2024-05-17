@@ -17,6 +17,7 @@
 #include <locale>
 #include <codecvt>
 #include <algorithm>
+#include <cstring>
 
 namespace Core { namespace Basic
 {

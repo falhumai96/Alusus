@@ -48,7 +48,7 @@ std::string followSymlink(const char* path, int* error) {
 
 std::vector<std::string> splitPath(const char* pathEnv, size_t len) {
   if (len == 0) {
-    len = std::strlen(pathEnv);
+    len = strlen(pathEnv);
   }
 
   std::vector<std::string> paths;

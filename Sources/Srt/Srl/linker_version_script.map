@@ -1,0 +1,20 @@
+ALUSUS_SRL {
+  global:
+    u32_memchr;
+    u32_snprintf;
+    u32_strcat;
+    u32_strchr;
+    u32_strcmp;
+    u32_strcpy;
+    u32_strlen;
+    u32_strncat;
+    u32_strncmp;
+    u32_strncpy;
+    u32_strrchr;
+    u32_strstr;
+    u32_towlower;
+    u32_towupper;
+
+  local:
+    *;
+};

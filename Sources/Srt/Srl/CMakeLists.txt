@@ -32,6 +32,11 @@ set_target_properties(AlususSrlLib PROPERTIES
 target_include_directories(AlususSrlLib PRIVATE "${AlususSrl_SOURCE_DIR}")
 target_include_directories(AlususSrlLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_precompile_headers(AlususSrlLib PRIVATE "srl.h")
+if ((AlususCompilerUsed STREQUAL "GNUClang" OR AlususCompilerUsed STREQUAL "AppleClang") AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_libraries(AlususSrlLib PRIVATE -Wl,-exported_symbols_list,${AlususSrl_SOURCE_DIR}/macos_exported_symbols.txt)
+elseif(AlususCompilerUsed STREQUAL "GCC" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  target_link_libraries(AlususSrlLib PRIVATE -Wl,--version-script,${AlususSrl_SOURCE_DIR}/linker_version_script.map)
+endif()
 
 # Copy libary header files to installation directory.
 install_files("/${ALUSUS_INCLUDE_DIR_NAME}/Srl" FILES srl.h)

@@ -510,33 +510,37 @@ std::string utf32_to_utf8(const std::u32string &utf32);
 
 std::u32string utf8_to_utf32(const std::string &utf8);
 
-int u32_snprintf(char32_t *buffer, size_t size, const char32_t *format, ...);
+extern "C" {
 
-const char32_t* u32_strchr(const char32_t* str, char32_t ch);
+int u32_snprintf(U32Char *buffer, size_t size, const U32Char *format, ...);
 
-const char32_t* u32_memchr(const char32_t* ptr, char32_t ch, size_t count);
+const U32Char* u32_strchr(const U32Char* str, U32Char ch);
 
-const char32_t* u32_strstr(const char32_t* str, const char32_t* substr);
+const U32Char* u32_memchr(const U32Char* ptr, U32Char ch, size_t count);
 
-const char32_t* u32_strrchr(const char32_t* str, char32_t ch);
+const U32Char* u32_strstr(const U32Char* str, const U32Char* substr);
 
-int u32_strcmp(const char32_t* str1, const char32_t* str2);
+const U32Char* u32_strrchr(const U32Char* str, U32Char ch);
 
-int u32_strncmp(const char32_t* str1, const char32_t* str2, size_t count);
+int u32_strcmp(const U32Char* str1, const U32Char* str2);
 
-char32_t* u32_strcpy(char32_t* dest, const char32_t* src);
+int u32_strncmp(const U32Char* str1, const U32Char* str2, size_t count);
 
-char32_t* u32_strncpy(char32_t* dest, const char32_t* src, size_t count);
+U32Char* u32_strcpy(U32Char* dest, const U32Char* src);
 
-char32_t* u32_strcat(char32_t* dest, const char32_t* src);
+U32Char* u32_strncpy(U32Char* dest, const U32Char* src, size_t count);
 
-char32_t* u32_strncat(char32_t* dest, const char32_t* src, size_t count);
+U32Char* u32_strcat(U32Char* dest, const U32Char* src);
 
-size_t u32_strlen(const char32_t* str);
+U32Char* u32_strncat(U32Char* dest, const U32Char* src, size_t count);
 
-char32_t u32_towupper(char32_t ch);
+size_t u32_strlen(const U32Char* str);
 
-char32_t u32_towlower(char32_t ch);
+U32Char u32_towupper(U32Char ch);
+
+U32Char u32_towlower(U32Char ch);
+
+}
 
 template<> inline void StringBase<Char>::append(LongInt i) {
   static constexpr size_t bufsize = 22;

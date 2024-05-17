@@ -78,7 +78,7 @@ set_target_properties(AlususCoreLib PROPERTIES
   VERSION ${AlususVersion}
 )
 target_precompile_headers(AlususCoreLib PRIVATE "core.h")
-target_link_libraries(AlususCoreLib PRIVATE AlususOSAL)
+target_link_libraries(AlususCoreLib PRIVATE AlususOSAL AlususSrlLib)
 
 # Add a target for Alusus core executable.
 set(AlususCore_Source_Files start.cpp interop.cpp)

@@ -1,4 +1,4 @@
-ALUSUS {
+ALUSUS_SPP {
   global:
     get_library_gateway;
 
